@@ -66,15 +66,43 @@
       background: #05080f;
     }
 
-    section h2 {
+    /* BLOCO CENTRALIZADO */
+    .section-content {
       max-width: 900px;
-      margin: 0 auto 18px auto;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* ÍCONE ACIMA */
+    .icon {
+      font-size: 44px;
+      margin-bottom: 16px;
+      color: #1aff8c;
+      filter: drop-shadow(0 0 14px rgba(26,255,140,0.18));
+    }
+
+    section h2 {
+      margin: 0 0 18px 0;
+      font-size: 1.7em;
     }
 
     section p {
-      max-width: 900px;
       margin: 0 auto;
       text-shadow: none;
+      max-width: 900px;
+    }
+
+    /* DASHBOARD STATUS */
+    .status {
+      margin-top: 18px;
+      padding: 12px 16px;
+      border: 1px solid rgba(26,255,140,0.35);
+      border-radius: 10px;
+      background: rgba(26,255,140,0.06);
+      display: inline-block;
+      color: #cfeedd;
+      font-size: 1.02em;
+      line-height: 1.6;
     }
 
     footer {
@@ -99,33 +127,44 @@
 </header>
 
 <section>
-  <h2>O que é o Token Amazônia</h2>
-  <p>
-    O Token Amazônia é um projeto de transparência ambiental que utiliza dados públicos
-    de satélite para monitorar, em escala continental, o estado ecológico da floresta amazônica.
-    Este site funciona como a vitrine técnica e institucional do sistema.
-  </p>
+  <div class="section-content">
+    <div class="icon">🌍</div>
+    <h2>O que é o Token Amazônia</h2>
+    <p>
+      O Token Amazônia é um projeto de transparência ambiental que utiliza dados públicos
+      de satélite para monitorar, em escala continental, o estado ecológico da floresta amazônica.
+      Este site funciona como a vitrine técnica e institucional do sistema.
+    </p>
+  </div>
 </section>
 
 <section>
-  <h2>Como funciona</h2>
-  <p>
-    Dados do programa Sentinel-2 são processados continuamente por meio do Google Earth Engine.
-    A partir desses dados, é gerado um índice ecológico sintético que representa a atividade
-    biológica da Amazônia ao longo do tempo.
-  </p>
+  <div class="section-content">
+    <div class="icon">⚙️</div>
+    <h2>Como funciona</h2>
+    <p>
+      Dados do programa Sentinel-2 são processados continuamente por meio do Google Earth Engine.
+      A partir desses dados, é gerado um índice ecológico sintético que representa a atividade
+      biológica da Amazônia ao longo do tempo.
+    </p>
+  </div>
 </section>
 
 <section id="dashboard">
-  <h2>Dashboard Amazônia</h2>
-  <p>
-    ● Sistema ativo — Amazônia<br>
-    Dados públicos • Atualização contínua
-  </p>
-  <p>
-    O painel interativo exibirá mapas e séries temporais
-    com base em dados oficiais de sensoriamento remoto.
-  </p>
+  <div class="section-content">
+    <div class="icon">📊</div>
+    <h2>Dashboard Amazônia</h2>
+
+    <div class="status">
+      ● Sistema ativo — Amazônia<br>
+      Dados públicos • Atualização contínua
+    </div>
+
+    <p style="margin-top: 22px;">
+      O painel interativo exibirá mapas e séries temporais
+      com base em dados oficiais de sensoriamento remoto.
+    </p>
+  </div>
 </section>
 
 <footer>
