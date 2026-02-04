@@ -11,6 +11,7 @@
       --line: rgba(26,255,140,.25);
       --neon:#1aff8c;
       --text:#e4e9f2;
+      --muted:#9bb0d3;
     }
 
     *{ box-sizing:border-box; }
@@ -22,113 +23,87 @@
       color: var(--text);
     }
 
-    /* HERO */
     header{
-      min-height: 100vh;
+      min-height:100vh;
       background:
-        linear-gradient(rgba(0,0,0,.74), rgba(0,0,0,.90)),
+        linear-gradient(rgba(0,0,0,.78), rgba(0,0,0,.92)),
         url("amazonia-tech.jpg") center/cover no-repeat;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      text-align:center;
-      padding: 48px 18px;
+      padding:32px 18px;
       position:relative;
+      text-align:center;
     }
 
-    /* Marca pequena no topo (sem menu) */
-    .brand{
+    /* TEXTO NO TOPO */
+    .topText{
       position:absolute;
-      top:18px;
-      left:50%;
-      transform:translateX(-50%);
-      padding:10px 14px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background: rgba(0,0,0,.28);
-      backdrop-filter: blur(8px);
-      font-weight: 900;
-      letter-spacing:.4px;
-      text-transform: uppercase;
-      font-size:.82em;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .brand .dot{
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      background: var(--neon);
-      box-shadow: 0 0 14px rgba(26,255,140,.55);
+      top:26px;
+      max-width: 980px;
+      text-align:center;
+      padding:0 16px;
     }
 
-    h1{
-      margin:0 0 14px;
-      font-size: clamp(1.7rem, 4.2vw, 3.1rem);
+    .topText h1{
+      margin:0 0 8px;
+      font-size: clamp(1.4rem, 3.2vw, 2.2rem);
       font-weight: 900;
       text-shadow: 0 2px 18px rgba(0,0,0,.65);
     }
 
-    .subtitle{
-      max-width: 900px;
-      font-size: clamp(1.0rem, 1.4vw, 1.15rem);
-      line-height: 1.6;
-      margin: 0 auto;
+    .topText p{
+      margin:0;
+      font-size: clamp(.95rem, 1.2vw, 1.05rem);
+      line-height:1.55;
+      color: var(--muted);
       text-shadow: 0 2px 18px rgba(0,0,0,.65);
-      opacity: .95;
     }
 
-    /* CTA */
+    /* BOTÃO CENTRAL */
     .btn{
-      margin-top: 26px;
-      padding: 14px 34px;
-      border: 1px solid var(--neon);
-      color: var(--neon);
+      padding:16px 38px;
+      border:1px solid var(--neon);
+      color:var(--neon);
       text-decoration:none;
       border-radius:999px;
-      font-weight: 900;
-      transition: .25s;
+      font-weight:900;
+      font-size:1.05em;
+      transition:.25s;
       background: rgba(0,0,0,.25);
-      backdrop-filter: blur(4px);
-      box-shadow: 0 0 18px rgba(26,255,140,.10);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-    }
-    .btn:hover{
-      background: var(--neon);
-      color: #05080f;
-      box-shadow: 0 0 22px rgba(26,255,140,.20);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 22px rgba(26,255,140,.15);
     }
 
-    /* Rodapé fixo visual */
+    .btn:hover{
+      background: var(--neon);
+      color:#05080f;
+      box-shadow: 0 0 28px rgba(26,255,140,.25);
+    }
+
     footer{
       position:absolute;
       bottom:0;
       left:0;
       right:0;
-      padding: 18px 16px;
+      padding:16px 14px;
       text-align:center;
-      font-size:.9em;
-      color: rgba(228,233,242,.75);
-      border-top: 1px solid rgba(15,31,58,.55);
+      font-size:.85em;
+      color: rgba(228,233,242,.70);
+      border-top:1px solid rgba(15,31,58,.55);
       background: linear-gradient(transparent, rgba(0,0,0,.35));
     }
 
-    footer .legal{
+    footer p{
       max-width: 980px;
-      margin: 0 auto;
-      line-height: 1.45;
+      margin:0 auto;
+      line-height:1.45;
     }
 
-    /* Mobile ajuste */
-    @media (max-width: 520px){
-      header{ padding: 56px 16px 90px; }
-      .brand{ top:12px; }
-      footer{ padding: 14px 12px; }
+    @media (max-width:520px){
+      .topText{ top:18px; }
+      header{ padding-bottom:90px; }
     }
   </style>
 </head>
@@ -136,30 +111,29 @@
 <body>
 
 <header>
-  <div class="brand">
-    <span class="dot"></span>
-    TOKEN AMAZÔNIA
+
+  <!-- TEXTO FIXO NO TOPO -->
+  <div class="topText">
+    <h1>Monitoramento Bioecológico da Amazônia</h1>
+    <p>
+      Prova visual, pública e verificável da dinâmica ecológica da Amazônia,
+      baseada exclusivamente em dados ambientais de satélite.
+    </p>
   </div>
 
-  <h1>Monitoramento Bioecológico da Amazônia</h1>
-
-  <p class="subtitle">
-    Prova visual, pública e verificável da dinâmica ecológica da Amazônia,
-    baseada exclusivamente em dados ambientais de satélite.
-  </p>
-
-  <!-- IMPORTANTE: aponta para a página do mapa/painel -->
-  <a class="btn" href="painel-mapa.html" aria-label="Acessar Painel">
+  <!-- ÚNICA AÇÃO CENTRAL -->
+  <a class="btn" href="painel-mapa.html">
     Acessar Painel
-    <span aria-hidden="true">→</span>
   </a>
 
   <footer>
-    <div class="legal">
+    <p>
       Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
-      Este projeto não constitui oferta de investimento. Trata-se de uma plataforma de monitoramento ambiental.
-    </div>
+      Este projeto não constitui oferta de investimento.
+      Trata-se de uma plataforma de monitoramento ambiental.
+    </p>
   </footer>
+
 </header>
 
 </body>
