@@ -1,16 +1,8 @@
 {
-  "updated_at": "2026-02-04T00:00:00Z",
   "points": [
-    { "lat": -3.10, "lon": -60.00, "tipo": "A", "bio": 86, "co2": 72, "agua": 81, "integridade": 84, "vegetacao": 78 },
-    { "lat": -2.60, "lon": -54.70, "tipo": "A", "bio": 74, "co2": 66, "agua": 70, "integridade": 76, "vegetacao": 73 },
-    { "lat": -7.20, "lon": -63.90, "tipo": "A", "bio": 91, "co2": 80, "agua": 77, "integridade": 88, "vegetacao": 82 },
-
-    { "lat": -4.20, "lon": -62.20, "tipo": "B", "bio": 55, "co2": 44, "agua": 51, "integridade": 60, "vegetacao": 58 },
-    { "lat": -5.60, "lon": -58.40, "tipo": "B", "bio": 42, "co2": 35, "agua": 39, "integridade": 48, "vegetacao": 41 },
-    { "lat": -6.90, "lon": -55.10, "tipo": "B", "bio": 28, "co2": 22, "agua": 26, "integridade": 31, "vegetacao": 29 },
-
-    { "lat": -1.90, "lon": -59.10, "tipo": "B", "bio": 63, "co2": 51, "agua": 60, "integridade": 65, "vegetacao": 62 },
-    { "lat": -3.90, "lon": -57.60, "tipo": "B", "bio": 33, "co2": 26, "agua": 30, "integridade": 37, "vegetacao": 32 },
-    { "lat": -8.10, "lon": -67.20, "tipo": "B", "bio": 47, "co2": 39, "agua": 45, "integridade": 50, "vegetacao": 46 }
+    { "lat": -3.1000, "lon": -60.0000, "bio": 82 },
+    { "lat": -2.9000, "lon": -54.7000, "bio": 45 },
+    { "lat": -8.1000, "lon": -63.9000, "bio": 18 },
+    { "lat": -4.3000, "lon": -50.2000, "bio": 67 }
   ]
 }
