@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel — Token Amazônia</title>
+  <style>
+    body{ margin:0; font-family: Arial, Helvetica, sans-serif; background:#05080f; color:#e4e9f2; }
+    .top{
+      padding:18px 16px;
+      border-bottom:1px solid #0f1f3a;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    a{ color:#1aff8c; text-decoration:none; font-weight:800; }
+    .wrap{ padding:22px 16px; }
+    .box{
+      margin-top:14px;
+      height:70vh;
+      border:1px solid rgba(26,255,140,.25);
+      border-radius:16px;
+      background: rgba(255,255,255,.02);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div><strong>📊 Painel Amazônia</strong></div>
+    <a href="./index.html">← Voltar</a>
+  </div>
+
+  <div class="wrap">
+    <div>● Sistema ativo da Amazônia</div>
+    <div>● Dados públicos</div>
+    <div>● Atualização contínua</div>
+
+    <div class="box">
+      <div>
+        Aqui vai o MAPA (coração do projeto).<br>
+        Próximo passo: embed do mapa / camada interativa.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
