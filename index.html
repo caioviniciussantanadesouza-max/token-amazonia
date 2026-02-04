@@ -8,258 +8,160 @@
   <style>
     :root{
       --bg:#05080f;
-      --panel:#070c16;
-      --line:#0f1f3a;
+      --panel: rgba(6,10,18,.78);
+      --line: rgba(26,255,140,.25);
+      --neon:#1aff8c;
       --text:#e4e9f2;
-      --muted:#9bb0d1;
-      --green:#1aff8c;
-      --shadow: 0 20px 70px rgba(0,0,0,.55);
+      --muted:#9bb0d3;
     }
 
-    *{ box-sizing:border-box; }
-
+    *{ box-sizing: border-box; }
     body{
       margin:0;
       font-family: Arial, Helvetica, sans-serif;
-      background:var(--bg);
-      color:var(--text);
+      background: var(--bg);
+      color: var(--text);
     }
 
-    /* HERO */
     header{
       min-height:100vh;
-      position:relative;
+      background:
+        linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.88)),
+        url(amazonia-tech.jpg) center/cover no-repeat;
       display:flex;
       flex-direction:column;
-      justify-content:center;
       align-items:center;
+      justify-content:center;
       text-align:center;
-      padding:120px 20px 60px;
-      overflow:hidden;
-
-      background:
-        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.88)),
-        url("amazonia-tech.jpg") center/cover no-repeat;
+      padding:140px 20px 40px;
+      position:relative;
     }
 
-    /* TOP BAR (ÍCONES) */
+    /* Topbar */
     .topbar{
       position:absolute;
-      top:18px;
+      top:20px;
       left:50%;
       transform:translateX(-50%);
       display:flex;
-      gap:14px;
-      align-items:center;
-      justify-content:center;
-      z-index:3;
-      padding:10px 12px;
-      border:1px solid rgba(26,255,140,.20);
-      border-radius:18px;
-      background: rgba(0,0,0,.28);
-      backdrop-filter: blur(10px);
+      gap:12px;
+      padding:10px 14px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      backdrop-filter: blur(8px);
     }
 
     .chip{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:8px;
       padding:10px 14px;
+      border:1px solid var(--line);
       border-radius:999px;
-      border:1px solid rgba(26,255,140,.35);
-      background: rgba(0,0,0,.20);
       cursor:pointer;
       user-select:none;
       transition:.2s;
+      background: rgba(0,0,0,.25);
       font-weight:700;
-      font-size:.95rem;
-      color: var(--text);
+      white-space:nowrap;
     }
     .chip:hover{
-      transform: translateY(-1px);
-      border-color: rgba(26,255,140,.70);
-      box-shadow: 0 0 0 3px rgba(26,255,140,.10);
+      border-color: rgba(26,255,140,.55);
+      box-shadow:0 0 18px rgba(26,255,140,.15);
     }
-    .ico{ font-size:1.1rem; }
 
     h1{
-      font-size: clamp(2rem, 4vw, 3.2rem);
-      margin: 0 0 18px;
-      text-shadow: 0 2px 18px rgba(0,0,0,0.6);
-      letter-spacing:.2px;
+      font-size:2.4em;
+      margin:0 0 14px;
+      text-shadow:0 2px 18px rgba(0,0,0,.6);
     }
-
     .subtitle{
-      max-width: 900px;
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      line-height: 1.6;
-      margin:0;
-      text-shadow: 0 2px 18px rgba(0,0,0,0.6);
-      opacity:.95;
+      max-width:820px;
+      font-size:1.05em;
+      line-height:1.6;
+      text-shadow:0 2px 18px rgba(0,0,0,.6);
+      color:#e8ecf6;
     }
 
     .btn{
-      margin-top: 34px;
-      padding: 14px 34px;
-      border: 1px solid var(--green);
-      color: var(--green);
+      margin-top:28px;
+      padding:14px 34px;
+      border:1px solid var(--neon);
+      color:var(--neon);
       text-decoration:none;
-      border-radius: 10px;
-      font-weight: 900;
-      letter-spacing:.3px;
+      border-radius:999px;
+      font-weight:900;
       transition:.25s;
-      backdrop-filter: blur(6px);
-      background: rgba(0,0,0,0.25);
-      box-shadow: 0 10px 40px rgba(0,0,0,.35);
-      display:inline-block;
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(4px);
     }
     .btn:hover{
-      background: var(--green);
-      color: #071018;
-    }
-
-    /* SEÇÕES */
-    section{
-      padding: 80px 20px;
-      border-top: 1px solid var(--line);
-      background: var(--bg);
-    }
-
-    .wrap{
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    section h2{
-      margin:0 0 16px;
-      font-size: 1.65rem;
-      letter-spacing:.2px;
-    }
-
-    section p{
-      margin:0;
-      color: var(--text);
-      line-height:1.7;
-      font-size:1.05rem;
-    }
-
-    .muted{ color: var(--muted); }
-
-    /* PAINEL (placeholder do mapa) */
-    .mapBox{
-      margin-top: 22px;
-      border-radius: 16px;
-      border: 1px solid rgba(26,255,140,.22);
-      background: rgba(7,12,22,.75);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .mapTop{
-      padding:14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .statusDot{
-      width:10px; height:10px; border-radius:50%;
-      background: var(--green);
-      box-shadow: 0 0 14px rgba(26,255,140,.55);
-      display:inline-block;
-      margin-right:8px;
-    }
-    .mapInner{
-      height: 420px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 22px;
-      color: var(--muted);
-      text-align:center;
-      line-height:1.6;
+      background:var(--neon);
+      color:#05080f;
     }
 
     footer{
-      padding: 42px 20px;
-      font-size: .95rem;
-      color: var(--muted);
+      padding:28px 16px;
+      font-size:.9em;
+      color:#8fa3c8;
       text-align:center;
-      border-top: 1px solid var(--line);
-      background: var(--bg);
+      border-top:1px solid #0f1f3a;
+      background:#05080f;
     }
 
-    /* MODAL */
+    /* Modal */
     .modalOverlay{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,.60);
-      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,.75);
       display:none;
       align-items:center;
       justify-content:center;
-      padding: 18px;
       z-index:9999;
     }
     .modal{
-      width: min(920px, 96vw);
-      border-radius: 18px;
-      border: 1px solid rgba(26,255,140,.24);
-      background: rgba(6,10,18,.92);
-      box-shadow: var(--shadow);
-      overflow:hidden;
+      width:min(820px, calc(100vw - 28px));
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      backdrop-filter: blur(10px);
+      box-shadow:0 10px 40px rgba(0,0,0,.55);
     }
-    .modalHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+    .modal header{
+      min-height:auto;
+      background:none;
+      padding:0;
+      margin-bottom:10px;
     }
-    .modalHead strong{
-      font-size:1.05rem;
-      letter-spacing:.2px;
-    }
-    .closeBtn{
-      border: 1px solid rgba(26,255,140,.35);
-      background: rgba(0,0,0,.25);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor:pointer;
-      font-weight: 800;
-      transition:.2s;
-    }
-    .closeBtn:hover{
-      border-color: rgba(26,255,140,.70);
-      box-shadow: 0 0 0 3px rgba(26,255,140,.10);
+    .modalTitle{
+      font-weight:900;
+      letter-spacing:.3px;
+      font-size:1.15em;
     }
     .modalBody{
-      padding: 18px 18px 22px;
-      color: var(--text);
-      line-height: 1.75;
+      color:#dfe7ff;
+      line-height:1.6;
+      margin-top:10px;
     }
-    .bullet{
-      margin: 0 0 12px 18px;
-      padding: 0;
+    .muted{ color: var(--muted); }
+    .close{
+      float:right;
+      cursor:pointer;
+      font-weight:900;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
     }
-    .bullet li{
-      margin: 6px 0;
-    }
+    .close:hover{ border-color: rgba(26,255,140,.55); }
 
-    /* RESPONSIVO */
-    @media (max-width: 560px){
-      header{ padding-top: 150px; }
-      .topbar{
-        width: calc(100% - 24px);
-        flex-wrap: wrap;
-        justify-content:center;
-        gap:10px;
-        border-radius:16px;
-      }
-      .chip{ width: auto; }
-      .mapInner{ height: 360px; }
+    ul.bullet{ padding-left:18px; }
+    ul.bullet li{ margin:8px 0; }
+
+    @media (max-width:560px){
+      header{ padding-top:160px; }
+      .topbar{ flex-wrap:wrap; justify-content:center; }
     }
   </style>
 </head>
@@ -267,76 +169,34 @@
 <body>
 
 <header>
-  <!-- ÍCONES NO TOPO (ABREM MODAL) -->
+  <!-- ÍCONES TOPO -->
   <div class="topbar">
-    <div class="chip" onclick="openModal('oquee')">
-      <div class="ico">🌿</div>
-      <div>O que é</div>
-    </div>
-
-    <div class="chip" onclick="openModal('comofunciona')">
-      <div class="ico">⚙️</div>
-      <div>Como funciona</div>
-    </div>
-
-    <div class="chip" onclick="openModal('painel')">
-      <div class="ico">📊</div>
-      <div>Painel</div>
-    </div>
+    <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
+    <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
+    <div class="chip" onclick="openModal('painel')">📊 Painel</div>
   </div>
 
   <h1>Monitoramento Bioecológico da Amazônia</h1>
-
   <p class="subtitle">
-    Prova visual, pública e verificável da dinâmica ecológica da Amazônia, baseada exclusivamente em dados ambientais de satélite.
+    Prova visual, pública e verificável da dinâmica ecológica da Amazônia,
+    baseada exclusivamente em dados ambientais de satélite.
   </p>
 
-  <a class="btn" href="#painel">Acessar Painel</a>
+  <!-- VAI PARA OUTRA PÁGINA -->
+  <a class="btn" href="painel.html">Acessar Painel</a>
 </header>
-
-<section>
-  <div class="wrap">
-    <h2>Transparência, ciência e escala continental</h2>
-    <p>
-      Este projeto apresenta uma vitrine pública de monitoramento ambiental, integrando dados oficiais de sensoriamento remoto
-      para mostrar, de forma clara e dinâmica, a ecologia da Amazônia.
-    </p>
-  </div>
-</section>
-
-<section id="painel">
-  <div class="wrap">
-    <h2>Painel Amazônia</h2>
-    <p class="muted">
-      <span class="statusDot"></span>
-      Sistema ativo da Amazônia • Dados públicos • Atualização contínua
-    </p>
-
-    <div class="mapBox">
-      <div class="mapTop">
-        <div><strong>Mapa (MVP)</strong></div>
-        <div class="muted">Em seguida vamos colocar o mapa real aqui</div>
-      </div>
-      <div class="mapInner">
-        Aqui será o coração do projeto: o mapa interativo da Amazônia.<br/>
-        Próximo passo: integrar um mapa (Leaflet/Mapbox) e camadas ambientais.
-      </div>
-    </div>
-  </div>
-</section>
 
 <footer>
   Token Amazônia — Transparência ambiental baseada em dados públicos.<br><br>
-  Este projeto não constitui oferta de investimento. Trata-se de uma plataforma de monitoramento ambiental.
+  Este projeto não constitui oferta de investimento.
+  Trata-se de uma plataforma de monitoramento ambiental.
 </footer>
 
 <!-- MODAL -->
 <div class="modalOverlay" id="modalOverlay" onclick="overlayClick(event)">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modalHead">
-      <strong id="modalTitle">Título</strong>
-      <button class="closeBtn" onclick="closeModal()">Fechar ✕</button>
-    </div>
+  <div class="modal">
+    <div class="close" onclick="closeModal()">Fechar ✕</div>
+    <div class="modalTitle" id="modalTitle"></div>
     <div class="modalBody" id="modalBody"></div>
   </div>
 </div>
@@ -348,8 +208,8 @@
       body: `
         <p>
           O Token Amazônia é um projeto de transparência ambiental que utiliza
-          <strong>dados públicos de satélite</strong> para monitorar, em escala continental, o
-          estado ecológico da floresta amazônica.
+          <strong>dados públicos de satélite</strong> para monitorar, em escala continental,
+          o estado ecológico da floresta amazônica.
         </p>
         <p class="muted">
           Este site funciona como a vitrine técnica e institucional do sistema.
@@ -390,21 +250,17 @@
     const bodyEl = document.getElementById("modalBody");
     const item = content[key];
     if(!item) return;
-
     titleEl.innerHTML = item.title;
     bodyEl.innerHTML = item.body;
     overlay.style.display = "flex";
   }
-
   function closeModal(){
     document.getElementById("modalOverlay").style.display = "none";
   }
-
   function overlayClick(e){
     if(e.target.id === "modalOverlay") closeModal();
   }
-
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", (e)=>{
     if(e.key === "Escape") closeModal();
   });
 </script>
