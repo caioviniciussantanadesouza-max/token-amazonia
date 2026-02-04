@@ -2,45 +2,275 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Painel — Token Amazônia</title>
+
+  <!-- Leaflet (mapa) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#05080f;color:#e4e9f2}
-    .top{padding:18px 20px;border-bottom:1px solid #0f1f3a;background:#05080f;position:sticky;top:0}
-    .top a{color:#1aff8c;text-decoration:none;font-weight:bold}
-    .wrap{max-width:1100px;margin:0 auto;padding:30px 20px}
-    .card{border:1px solid rgba(26,255,140,.35);border-radius:14px;padding:22px;background:rgba(0,0,0,.35);box-shadow:0 0 28px rgba(26,255,140,.08)}
-    h1{margin:0 0 10px 0}
-    ul{margin:14px 0 0 18px}
-    .muted{color:#b7c6e6;line-height:1.6}
-    .mapBox{margin-top:22px;border:1px dashed rgba(26,255,140,.35);border-radius:14px;height:420px;display:flex;align-items:center;justify-content:center;color:#8fa3c8}
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#05080f;
+      color:#e4e9f2;
+    }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 18px;
+      border-bottom:1px solid #0f1f3a;
+      background: rgba(5,8,15,.92);
+      position: sticky;
+      top:0;
+      z-index: 10;
+      backdrop-filter: blur(6px);
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .brand b{ font-size: 14px; letter-spacing:.2px; }
+    .brand span{ font-size: 12px; color:#8fa3c8; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      padding:10px 14px;
+      border:1px solid #1aff8c;
+      color:#1aff8c;
+      text-decoration:none;
+      border-radius:10px;
+      font-weight:700;
+      background: rgba(0,0,0,.25);
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{ background:#1aff8c; color:#05080f; }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      min-height: calc(100vh - 58px);
+    }
+
+    .side{
+      border-right:1px solid #0f1f3a;
+      padding:18px;
+      background: rgba(5,8,15,.85);
+    }
+
+    .card{
+      border:1px solid rgba(26,255,140,.25);
+      border-radius:14px;
+      padding:14px;
+      margin-bottom:14px;
+      background: rgba(0,0,0,.25);
+    }
+
+    .card h3{
+      margin:0 0 10px 0;
+      font-size:14px;
+      color:#dfe7ff;
+    }
+
+    .kpi{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      margin-top:10px;
+    }
+    .kpi .label{ font-size:12px; color:#8fa3c8; }
+    .kpi .value{ font-size:18px; font-weight:800; }
+
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      font-size:12px;
+      color:#8fa3c8;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px;
+    }
+
+    #map{
+      width:100%;
+      height: calc(100vh - 58px);
+      background:#0b1220;
+    }
+
+    /* Responsivo */
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      #map{ height: 60vh; }
+      .side{ border-right:none; border-bottom:1px solid #0f1f3a; }
+    }
   </style>
 </head>
+
 <body>
-
   <div class="top">
-    <a href="index.html">← Voltar para a página inicial</a>
-  </div>
+    <div class="brand">
+      <b>📊 Painel Amazônia</b>
+      <span>Dados públicos • Atualização contínua (MVP)</span>
+    </div>
 
-  <div class="wrap">
-    <div class="card">
-      <h1>📊 Painel Amazônia — você encontra</h1>
-
-      <ul>
-        <li><strong>Sistema ativo da Amazônia</strong></li>
-        <li><strong>Dados públicos</strong></li>
-        <li><strong>Atualização contínua</strong></li>
-      </ul>
-
-      <p class="muted">
-        Painel interativo com mapas e séries temporais baseados em dados oficiais de sensoriamento remoto.
-      </p>
-
-      <div class="mapBox">
-        (Aqui entra o mapa interativo da Amazônia)
-      </div>
+    <div class="actions">
+      <a class="btn" href="index.html">← Voltar</a>
+      <button class="btn" id="btnFocus">Focar Amazônia</button>
     </div>
   </div>
 
+  <div class="wrap">
+    <aside class="side">
+      <div class="card">
+        <h3>● Sistema ativo da Amazônia</h3>
+        <div class="kpi">
+          <div>
+            <div class="label">Índice bioecológico (0–100)</div>
+            <div class="value" id="indice">72</div>
+          </div>
+          <div style="font-size:22px;">🛰️</div>
+        </div>
+
+        <div class="legend">
+          <div><span class="dot" style="background:#ff3b30;"></span>Baixa</div>
+          <div><span class="dot" style="background:#ffd60a;"></span>Média</div>
+          <div><span class="dot" style="background:#34c759;"></span>Alta</div>
+        </div>
+
+        <p style="margin:12px 0 0 0; font-size:12px; color:#8fa3c8; line-height:1.5;">
+          Este é um MVP visual. Próximo passo: conectar camadas reais (ex.: NDVI/Sentinel-2),
+          máscara da Amazônia e série temporal.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Camadas (MVP)</h3>
+        <label style="display:flex; align-items:center; gap:10px; font-size:13px; margin-top:8px;">
+          <input type="checkbox" id="chkHeat" checked />
+          Heatmap “bioecológico” (demo)
+        </label>
+
+        <label style="display:flex; align-items:center; gap:10px; font-size:13px; margin-top:8px;">
+          <input type="checkbox" id="chkMarker" checked />
+          Pontos de monitoramento (demo)
+        </label>
+      </div>
+    </aside>
+
+    <main>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    // Centro aproximado da Amazônia
+    const amazonCenter = [-3.4653, -62.2159];
+    const amazonZoom = 5;
+
+    const map = L.map("map", {
+      zoomControl: true,
+      attributionControl: true
+    }).setView(amazonCenter, amazonZoom);
+
+    // Base map
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19
+    }).addTo(map);
+
+    // --- DEMO: pontos e "calor" (circles) ---
+    const demoPoints = [
+      { name:"Manaus",     lat:-3.1190,  lon:-60.0217, level:"alta"  },
+      { name:"Santarém",   lat:-2.4431,  lon:-54.7083, level:"media" },
+      { name:"Porto Velho",lat:-8.7612,  lon:-63.9004, level:"baixa" },
+      { name:"Rio Branco", lat:-9.9754,  lon:-67.8243, level:"media" },
+      { name:"Belém",      lat:-1.4558,  lon:-48.4902, level:"alta"  }
+    ];
+
+    function levelColor(level){
+      if(level === "baixa") return "#ff3b30";
+      if(level === "media") return "#ffd60a";
+      return "#34c759";
+    }
+
+    const layerMarkers = L.layerGroup();
+    const layerHeat = L.layerGroup();
+
+    // markers
+    demoPoints.forEach(p => {
+      const m = L.circleMarker([p.lat, p.lon], {
+        radius: 8,
+        weight: 2,
+        color: levelColor(p.level),
+        fillColor: levelColor(p.level),
+        fillOpacity: 0.8
+      }).bindPopup(`<b>${p.name}</b><br>Nível: ${p.level}`);
+      layerMarkers.addLayer(m);
+    });
+
+    // heat-like circles (bigger translucent circles)
+    demoPoints.forEach(p => {
+      const c = L.circle([p.lat, p.lon], {
+        radius: 220000,
+        weight: 0,
+        color: levelColor(p.level),
+        fillColor: levelColor(p.level),
+        fillOpacity: 0.18
+      });
+      layerHeat.addLayer(c);
+    });
+
+    layerHeat.addTo(map);
+    layerMarkers.addTo(map);
+
+    // Toggle layers
+    document.getElementById("chkHeat").addEventListener("change", (e) => {
+      if(e.target.checked) layerHeat.addTo(map);
+      else map.removeLayer(layerHeat);
+    });
+
+    document.getElementById("chkMarker").addEventListener("change", (e) => {
+      if(e.target.checked) layerMarkers.addTo(map);
+      else map.removeLayer(layerMarkers);
+    });
+
+    // Focar Amazônia
+    document.getElementById("btnFocus").addEventListener("click", () => {
+      map.setView(amazonCenter, amazonZoom);
+    });
+
+    // Demo: índice mudando (só pra parecer vivo)
+    const indiceEl = document.getElementById("indice");
+    setInterval(() => {
+      const base = 72;
+      const noise = Math.floor((Math.random() * 9) - 4); // -4..+4
+      let v = base + noise;
+      if(v < 0) v = 0;
+      if(v > 100) v = 100;
+      indiceEl.textContent = v;
+    }, 1800);
+  </script>
 </body>
 </html>
