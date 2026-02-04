@@ -1,166 +1,437 @@
-<script>
-  // === CAMADAS ===
-  const layerPontos = L.layerGroup().addTo(map);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel Amazônia — Token Amazônia</title>
 
-  // === CORES POR BIO (0-100) ===
-  function corPorValor(v){
-    const n = Number(v);
-    if (Number.isNaN(n)) return "rgba(120,140,180,.85)"; // fallback neutro
+  <!-- Leaflet (MAPA) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
 
-    if (n < 30) return "rgba(255,60,60,.95)";      // vermelho (baixo)
-    if (n < 60) return "rgba(255,200,40,.95)";     // amarelo (médio)
-    return "rgba(26,255,140,.95)";                 // verde (alto)
-  }
+  <style>
+    :root{
+      --bg:#05080f;
+      --panel: rgba(6,10,18,.78);
+      --line: rgba(26,255,140,.25);
+      --neon:#1aff8c;
+      --text:#e4e9f2;
+      --muted:#9bb0d3;
+    }
+    *{ box-sizing:border-box; }
 
-  function limparPontos(){
-    layerPontos.clearLayers();
-  }
+    html, body { height: 100%; margin: 0; background: var(--bg); }
+    body { font-family: Arial, Helvetica, sans-serif; color: var(--text); }
 
-  // === DESENHO A (TORRE) ===
-  function desenharTorre(lat, lon, c, p){
-    // núcleo forte
-    const marker = L.circleMarker([lat, lon], {
-      radius: 10,
-      color: c,
-      weight: 2,
-      fillColor: c,
-      fillOpacity: 0.55
-    });
+    /* MAPA ocupa a tela inteira */
+    #map { height: 100vh; width: 100%; background: #05080f; }
 
-    // halo grande HUD
-    L.circleMarker([lat, lon], {
-      radius: 26,
-      color: c,
-      weight: 0,
-      fillColor: c,
-      fillOpacity: 0.16
-    }).addTo(layerPontos);
-
-    // segundo halo (mais sutil)
-    L.circleMarker([lat, lon], {
-      radius: 42,
-      color: c,
-      weight: 0,
-      fillColor: c,
-      fillOpacity: 0.08
-    }).addTo(layerPontos);
-
-    // “pilar” (anel vertical fake: vários círculos pequenos subindo)
-    // (efeito visual simples, sem 3D de verdade)
-    for(let i=1;i<=4;i++){
-      L.circleMarker([lat + (i*0.03), lon], {
-        radius: 5 - i*0.6,
-        color: c,
-        weight: 1,
-        fillColor: c,
-        fillOpacity: 0.22
-      }).addTo(layerPontos);
+    /* Top HUD */
+    .hud{
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display:flex;
+      gap:12px;
+      padding:10px 14px;
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      backdrop-filter: blur(10px);
+      align-items:center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    // popup ambiental (sem cidade)
-    marker.bindPopup(popupAmbiental(p));
+    .chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      cursor:pointer;
+      user-select:none;
+      transition:.2s;
+      background: rgba(0,0,0,.25);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .chip:hover{
+      border-color: rgba(26,255,140,.55);
+      box-shadow:0 0 18px rgba(26,255,140,.15);
+    }
 
-    marker.addTo(layerPontos);
-  }
+    .right{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-left: 6px;
+    }
 
-  // === DESENHO B (GRADE) ===
-  function desenharGrade(lat, lon, c, p){
-    // ponto pequeno
-    const marker = L.circleMarker([lat, lon], {
-      radius: 5,
-      color: c,
-      weight: 1.5,
-      fillColor: c,
-      fillOpacity: 0.30
+    .btn{
+      padding:10px 14px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      text-decoration:none;
+      font-weight:900;
+      transition:.2s;
+    }
+    .btn:hover{
+      border-color: rgba(26,255,140,.55);
+      box-shadow:0 0 18px rgba(26,255,140,.15);
+    }
+
+    /* Legenda */
+    .legend{
+      position: fixed;
+      bottom: 18px;
+      left: 18px;
+      z-index: 9999;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px;
+      backdrop-filter: blur(10px);
+      width: 260px;
+    }
+    .legend h3{
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing: .2px;
+    }
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        rgba(255,60,60,.95),
+        rgba(255,210,60,.95),
+        rgba(26,255,140,.95)
+      );
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .legend .row{
+      display:flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: rgba(228,233,242,.80);
+      margin-top: 6px;
+    }
+
+    /* Status */
+    .status{
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 9999;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px;
+      backdrop-filter: blur(10px);
+      width: min(360px, calc(100vw - 36px));
+      font-size: 12px;
+      color: rgba(228,233,242,.85);
+      line-height: 1.45;
+    }
+    .dot{
+      display:inline-block;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      margin-right:8px;
+      background: rgba(26,255,140,.95);
+      box-shadow: 0 0 12px rgba(26,255,140,.35);
+      vertical-align: middle;
+    }
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.75);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+    }
+    .modal{
+      width:min(820px, calc(100vw - 28px));
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      backdrop-filter: blur(10px);
+      box-shadow:0 10px 40px rgba(0,0,0,.55);
+    }
+    .modalTitle{ font-weight:900; font-size: 16px; }
+    .modalBody{ margin-top:10px; color:#dfe7ff; line-height:1.6; }
+    .muted{ color: var(--muted); }
+    .close{
+      float:right;
+      cursor:pointer;
+      font-weight:900;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    .close:hover{ border-color: rgba(26,255,140,.55); }
+    ul.bullet{ padding-left:18px; }
+    ul.bullet li{ margin:8px 0; }
+
+    /* remove qualquer “margem branca” padrão do leaflet */
+    .leaflet-container { background: #05080f; }
+  </style>
+</head>
+
+<body>
+
+  <!-- HUD do painel (fica aqui, no dashboard, como você decidiu) -->
+  <div class="hud">
+    <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
+    <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
+    <div class="chip" onclick="openModal('painel')">📊 Painel</div>
+
+    <div class="right">
+      <a class="btn" href="index.html">⬅ Voltar</a>
+      <button class="btn" onclick="carregarDados()">↻ Atualizar dados</button>
+    </div>
+  </div>
+
+  <!-- MAPA -->
+  <div id="map"></div>
+
+  <!-- Legenda -->
+  <div class="legend">
+    <h3>Escala Bioecológica (0–100)</h3>
+    <div class="bar"></div>
+    <div class="row">
+      <span>Baixa</span><span>Média</span><span>Alta</span>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status" id="statusBox">
+    <span class="dot"></span>
+    <strong>Sistema ativo — Amazônia</strong><br>
+    Dados públicos • Atualização contínua<br>
+    <span class="muted" id="statusMsg">Carregando pontos…</span>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modalOverlay" id="modalOverlay" onclick="overlayClick(event)">
+    <div class="modal">
+      <div class="close" onclick="closeModal()">Fechar ✕</div>
+      <div class="modalTitle" id="modalTitle"></div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script>
+    // ====== 1) MAPA BASE (sem rótulos de cidades) ======
+    const map = L.map("map", {
+      zoomControl: false,
+      attributionControl: false
     });
 
-    // halo pequeno
-    L.circleMarker([lat, lon], {
-      radius: 14,
-      color: c,
-      weight: 0,
-      fillColor: c,
-      fillOpacity: 0.10
-    }).addTo(layerPontos);
+    // Fundo escuro sem labels (sem nomes de cidades)
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+      { maxZoom: 19 }
+    ).addTo(map);
 
-    marker.bindPopup(popupAmbiental(p));
-    marker.addTo(layerPontos);
-  }
+    // “Enquadra” região amazônica (aproximado)
+    const amazonBounds = L.latLngBounds(
+      L.latLng(-20.5, -79.5), // SW
+      L.latLng(  6.5, -44.0)  // NE
+    );
 
-  // === POPUP (SEM CIDADE, SEM NOME) ===
-  function popupAmbiental(p){
-    const bio = safeNum(p.bio);
-    const co2 = safeNum(p.co2);
-    const agua = safeNum(p.agua);
-    const integridade = safeNum(p.integridade);
-    const vegetacao = safeNum(p.vegetacao);
+    map.fitBounds(amazonBounds);
+    map.setMaxBounds(amazonBounds.pad(0.35)); // deixa uma folga
+    map.on("drag", () => map.panInsideBounds(amazonBounds.pad(0.35), { animate: false }));
 
-    return `
-      <div style="font-weight:900;margin-bottom:6px;">Ponto de leitura — Amazônia</div>
-      <div>BioÍndice: <strong>${bio}</strong> / 100</div>
-      <div>CO₂ (proxy): <strong>${co2}</strong></div>
-      <div>Regulação hídrica: <strong>${agua}</strong></div>
-      <div>Integridade ecológica: <strong>${integridade}</strong></div>
-      <div>Vegetação (proxy NDVI/EVI): <strong>${vegetacao}</strong></div>
-      <div style="margin-top:6px;opacity:.75;font-size:12px;">
-        lat: ${Number(p.lat).toFixed(4)} | lon: ${Number(p.lon).toFixed(4)}
-      </div>
-    `;
-  }
+    // Zoom control no canto inferior direito (HUD)
+    L.control.zoom({ position: "bottomright" }).addTo(map);
 
-  function safeNum(v){
-    const n = Number(v);
-    if(Number.isNaN(n)) return "—";
-    // arredonda bonito
-    return Math.round(n * 10) / 10;
-  }
+    // Camada de pontos
+    const layerPontos = L.layerGroup().addTo(map);
 
-  // === CARREGAR DADOS ===
-  async function carregarDados(){
-    try{
-      limparPontos();
-
-      const res = await fetch("dados.json", { cache: "no-store" });
-      if(!res.ok) throw new Error("Não achei dados.json (erro " + res.status + ")");
-      const data = await res.json();
-
-      // 1) B (grade) primeiro (fica “por baixo”)
-      // 2) A (torres) por cima (destaque)
-      const pontosB = [];
-      const pontosA = [];
-
-      for(const p of data.points){
-        // sem cidade/sem nome — ignorar se vier
-        const bio = Number(p.bio);
-
-        // regra de tipo:
-        // - se p.tipo existir ("A" ou "B"), respeita
-        // - senão: bio >= 70 vira torre (A), resto grade (B)
-        const tipo = (p.tipo === "A" || p.tipo === "B")
-          ? p.tipo
-          : (bio >= 70 ? "A" : "B");
-
-        if(tipo === "A") pontosA.push(p);
-        else pontosB.push(p);
-      }
-
-      // desenha B
-      for(const p of pontosB){
-        const c = corPorValor(p.bio);
-        desenharGrade(p.lat, p.lon, c, p);
-      }
-
-      // desenha A
-      for(const p of pontosA){
-        const c = corPorValor(p.bio);
-        desenharTorre(p.lat, p.lon, c, p);
-      }
-
-    }catch(err){
-      alert("Erro ao carregar dados: " + err.message);
+    // ====== 2) CORES (verde / amarelo / vermelho) ======
+    function corPorValor(v){
+      // v esperado 0..100
+      const n = Number(v);
+      if (Number.isNaN(n)) return "rgba(160,170,190,.85)";
+      if (n < 34) return "rgba(255,60,60,.95)";
+      if (n < 67) return "rgba(255,210,60,.95)";
+      return "rgba(26,255,140,.95)";
     }
-  }
 
-  // Carrega ao abrir a página
-  carregarDados();
-</script>
+    function limparPontos(){
+      layerPontos.clearLayers();
+    }
+
+    // ====== 3) FALLBACK: se não tiver dados.json, gera pontos falsos ======
+    function gerarPontosFake(qtd = 50){
+      const pts = [];
+      for(let i=0;i<qtd;i++){
+        const lat = -18 + Math.random()*22; // -18..4
+        const lon = -75 + Math.random()*28; // -75..-47
+        const bio = Math.floor(Math.random()*101);
+        pts.push({ lat, lon, bio });
+      }
+      return { points: pts, fonte: "FAKE_LOCAL" };
+    }
+
+    function setStatus(msg){
+      document.getElementById("statusMsg").textContent = msg;
+    }
+
+    // ====== 4) CARREGAR DADOS REAIS (dados.json) ======
+    async function carregarDados(){
+      try{
+        limparPontos();
+        setStatus("Buscando dados.json…");
+
+        // tenta buscar dados.json do repositório
+        const res = await fetch("dados.json", { cache: "no-store" });
+
+        let data;
+        if(!res.ok){
+          // NÃO deixa branco: usa fallback
+          data = gerarPontosFake(60);
+          setStatus("Sem dados.json (usando pontos de demonstração).");
+        } else {
+          data = await res.json();
+          setStatus("Dados carregados (pontos reais do arquivo).");
+        }
+
+        if(!data.points || !Array.isArray(data.points)){
+          data = gerarPontosFake(60);
+          setStatus("Formato inválido (usando pontos de demonstração).");
+        }
+
+        for(const p of data.points){
+          // aceita "bio" ou "valor" pra não quebrar nunca
+          const v = (p.bio ?? p.valor ?? p.v ?? 0);
+          const c = corPorValor(v);
+
+          // Ponto principal
+          const marker = L.circleMarker([p.lat, p.lon], {
+            radius: 7,
+            color: c,
+            weight: 2,
+            fillColor: c,
+            fillOpacity: 0.35
+          });
+
+          // Popup simples (sem cidade / sem bagunça)
+          marker.bindPopup(
+            `Bio: <strong>${v}</strong><br>lat: ${p.lat.toFixed(4)} | lon: ${p.lon.toFixed(4)}`
+          );
+
+          marker.addTo(layerPontos);
+
+          // Halo (efeito HUD)
+          L.circleMarker([p.lat, p.lon], {
+            radius: 18,
+            color: c,
+            weight: 0,
+            fillColor: c,
+            fillOpacity: 0.12
+          }).addTo(layerPontos);
+        }
+
+      }catch(err){
+        // também NÃO deixa branco
+        const data = gerarPontosFake(60);
+        for(const p of data.points){
+          const c = corPorValor(p.bio);
+          L.circleMarker([p.lat, p.lon], { radius: 7, color:c, weight:2, fillColor:c, fillOpacity:0.35 }).addTo(layerPontos);
+          L.circleMarker([p.lat, p.lon], { radius:18, color:c, weight:0, fillColor:c, fillOpacity:0.12 }).addTo(layerPontos);
+        }
+        setStatus("Erro ao carregar dados reais (mostrando demonstração).");
+        console.error(err);
+      }
+    }
+
+    // Carrega ao abrir
+    carregarDados();
+
+    // ====== MODAIS (mesmo conteúdo que você já aprovou) ======
+    const content = {
+      oquee: {
+        title: "🌿 O que é o Token Amazônia",
+        body: `
+          <p>
+            O Token Amazônia é um projeto de transparência ambiental que utiliza
+            <strong>dados públicos de satélite</strong> para monitorar, em escala continental,
+            o estado ecológico da floresta amazônica.
+          </p>
+          <p class="muted">
+            Este site funciona como a vitrine técnica e institucional do sistema.
+          </p>
+        `
+      },
+      comofunciona: {
+        title: "⚙️ Como funciona",
+        body: `
+          <p>
+            Dados do programa <strong>Sentinel-2</strong> são processados continuamente por meio do
+            <strong>Google Earth Engine</strong>.
+          </p>
+          <p class="muted">
+            A partir desses dados, é gerado um <strong>índice ecológico sintético</strong> que
+            representa a atividade biológica da Amazônia ao longo do tempo.
+          </p>
+        `
+      },
+      painel: {
+        title: "📊 Painel Amazônia — você encontra",
+        body: `
+          <ul class="bullet">
+            <li><strong>Sistema ativo da Amazônia</strong></li>
+            <li><strong>Dados públicos</strong></li>
+            <li><strong>Atualização contínua</strong></li>
+          </ul>
+          <p class="muted">
+            Painel interativo com mapas e séries temporais baseados em dados oficiais de sensoriamento remoto.
+          </p>
+        `
+      }
+    };
+
+    function openModal(key){
+      const overlay = document.getElementById("modalOverlay");
+      const titleEl = document.getElementById("modalTitle");
+      const bodyEl = document.getElementById("modalBody");
+      const item = content[key];
+      if(!item) return;
+      titleEl.innerHTML = item.title;
+      bodyEl.innerHTML = item.body;
+      overlay.style.display = "flex";
+    }
+    function closeModal(){
+      document.getElementById("modalOverlay").style.display = "none";
+    }
+    function overlayClick(e){
+      if(e.target.id === "modalOverlay") closeModal();
+    }
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape") closeModal();
+    });
+  </script>
+</body>
+</html>
