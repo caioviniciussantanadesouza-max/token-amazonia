@@ -1,14 +1,9 @@
 {
-  "bounds": {
-    "minLat": -18.0,
-    "maxLat": 6.5,
-    "minLon": -74.5,
-    "maxLon": -44.0
-  },
+  "updated_at": "2026-02-04T00:00:00Z",
   "points": [
-    { "lat": -3.10, "lon": -60.02, "valor": 82, "nome": "Manaus" },
-    { "lat": -1.45, "lon": -48.48, "valor": 44, "nome": "Belém" },
-    { "lat": -8.76, "lon": -63.90, "valor": 28, "nome": "Porto Velho" },
-    { "lat": -9.97, "lon": -67.81, "valor": 67, "nome": "Rio Branco" }
+    { "lat": -3.50, "lon": -62.20, "bio": 78, "co2": 62, "agua": 71, "integridade": 80, "vegetacao": 76 },
+    { "lat": -4.20, "lon": -60.10, "bio": 41, "co2": 38, "agua": 44, "integridade": 52, "vegetacao": 39 },
+    { "lat": -6.10, "lon": -66.70, "bio": 23, "co2": 20, "agua": 35, "integridade": 28, "vegetacao": 19 },
+    { "lat": -2.10, "lon": -54.90, "bio": 66, "co2": 55, "agua": 60, "integridade": 70, "vegetacao": 64 }
   ]
 }
