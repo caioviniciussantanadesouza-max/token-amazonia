@@ -3,291 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Token Amazônia — Dashboard</title>
-
-  <!-- Leaflet (mapa) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
-  <!-- Chart.js (gráfico simples) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <title>Painel — Token Amazônia</title>
   <style>
-    :root{
-      --bg:#05080f;
-      --panel:rgba(10,14,22,.78);
-      --line:rgba(0,255,140,.25);
-      --text:#e4e9f2;
-      --muted:#9fb0d1;
-      --neon:#1aff8c;
-    }
-    body{
-      margin:0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .top{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:14px 16px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      background: rgba(0,0,0,.35);
-      position: sticky;
-      top:0;
-      z-index: 10;
-      backdrop-filter: blur(8px);
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:700;
-      letter-spacing:.3px;
-    }
-    .pill{
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.35);
-      padding:8px 12px;
-      border-radius:999px;
-      color: var(--muted);
-      font-size:14px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .back{
-      color: var(--neon);
-      border:1px solid rgba(26,255,140,.35);
-      padding:8px 12px;
-      border-radius:10px;
-      text-decoration:none;
-      background: rgba(0,0,0,.35);
-    }
-    .wrap{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 16px;
-      display:grid;
-      grid-template-columns: 1.4fr .6fr;
-      gap: 14px;
-    }
-    @media (max-width: 980px){
-      .wrap{ grid-template-columns: 1fr; }
-    }
-    .card{
-      background: var(--panel);
-      border:1px solid rgba(255,255,255,.06);
-      border-radius: 16px;
-      overflow:hidden;
-      box-shadow: 0 12px 40px rgba(0,0,0,.35);
-    }
-    .cardHead{
-      padding:14px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .cardTitle{
-      font-weight:800;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .statusDot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--neon);
-      box-shadow: 0 0 14px rgba(26,255,140,.7);
-    }
-    #map{
-      width:100%;
-      height: 520px;
-    }
-    .side{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-    .metric{
-      padding:14px;
-    }
-    .big{
-      font-size:38px;
-      font-weight:900;
-      color: var(--neon);
-      line-height:1;
-      margin: 6px 0 6px;
-    }
-    .muted{ color: var(--muted); font-size:14px; line-height:1.45; }
-    .legend{
-      padding:14px;
-      border-top:1px solid rgba(255,255,255,.06);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .bar{
-      height:10px;
-      border-radius:999px;
-      background: linear-gradient(90deg, #ff3b30, #ffd60a, #34c759);
-      border:1px solid rgba(255,255,255,.10);
-    }
-    .legendRow{
-      display:flex; justify-content:space-between; font-size:12px; color: var(--muted);
-    }
-    .chartWrap{ padding: 14px; }
-    canvas{ width:100% !important; height: 180px !important; }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#05080f;color:#e4e9f2}
+    .top{padding:18px 20px;border-bottom:1px solid #0f1f3a;background:#05080f;position:sticky;top:0}
+    .top a{color:#1aff8c;text-decoration:none;font-weight:bold}
+    .wrap{max-width:1100px;margin:0 auto;padding:30px 20px}
+    .card{border:1px solid rgba(26,255,140,.35);border-radius:14px;padding:22px;background:rgba(0,0,0,.35);box-shadow:0 0 28px rgba(26,255,140,.08)}
+    h1{margin:0 0 10px 0}
+    ul{margin:14px 0 0 18px}
+    .muted{color:#b7c6e6;line-height:1.6}
+    .mapBox{margin-top:22px;border:1px dashed rgba(26,255,140,.35);border-radius:14px;height:420px;display:flex;align-items:center;justify-content:center;color:#8fa3c8}
   </style>
 </head>
-
 <body>
+
   <div class="top">
-    <div class="brand">📡 Token Amazônia — Dashboard</div>
-    <div class="pill"><span class="statusDot"></span> Sistema ativo • Dados públicos • Atualização contínua</div>
-    <a class="back" href="index.html">Voltar</a>
+    <a href="index.html">← Voltar para a página inicial</a>
   </div>
 
   <div class="wrap">
-
-    <!-- MAPA -->
     <div class="card">
-      <div class="cardHead">
-        <div class="cardTitle">🗺️ Mapa Bioecológico — Amazônia</div>
-        <div class="muted">MVP • área aproximada</div>
-      </div>
-      <div id="map"></div>
-    </div>
+      <h1>📊 Painel Amazônia — você encontra</h1>
 
-    <!-- LADO DIREITO -->
-    <div class="side">
-      <div class="card metric">
-        <div class="muted">Índice Bioecológico (0–100)</div>
-        <div class="big" id="idx">78</div>
-        <div class="muted">
-          Interpretação visual no mapa (vermelho → amarelo → verde).
-        </div>
-        <div class="legend">
-          <div class="bar"></div>
-          <div class="legendRow">
-            <span>Baixo</span><span>Médio</span><span>Alto</span>
-          </div>
-        </div>
-      </div>
+      <ul>
+        <li><strong>Sistema ativo da Amazônia</strong></li>
+        <li><strong>Dados públicos</strong></li>
+        <li><strong>Atualização contínua</strong></li>
+      </ul>
 
-      <div class="card">
-        <div class="cardHead">
-          <div class="cardTitle">📈 Série temporal</div>
-          <div class="muted">últimos 12 pontos</div>
-        </div>
-        <div class="chartWrap">
-          <canvas id="ts"></canvas>
-        </div>
+      <p class="muted">
+        Painel interativo com mapas e séries temporais baseados em dados oficiais de sensoriamento remoto.
+      </p>
+
+      <div class="mapBox">
+        (Aqui entra o mapa interativo da Amazônia)
       </div>
     </div>
-
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script>
-    // 1) MAPA BASE
-    const map = L.map('map', { zoomControl: true, attributionControl: true })
-      .setView([-4.5, -62], 4);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18
-    }).addTo(map);
-
-    // 2) "MÁSCARA" para escurecer tudo fora da Amazônia (MVP aproximado)
-    //    Técnica: polígono com 2 anéis:
-    //    - anel externo: "mundo"
-    //    - anel interno: área amazônica (buraco transparente)
-    const world = [
-      [ 85, -180],
-      [ 85,  180],
-      [-85,  180],
-      [-85, -180]
-    ];
-
-    // Área aproximada da Amazônia (depois trocamos por GeoJSON oficial)
-    // (um polígono simples para o MVP)
-    const amazonApprox = [
-      [  6.0, -79.0],
-      [  5.0, -50.0],
-      [  1.5, -44.0],
-      [ -5.0, -44.0],
-      [ -13.0, -50.0],
-      [ -16.0, -62.0],
-      [ -12.0, -73.0],
-      [  -3.0, -79.0],
-      [   6.0, -79.0]
-    ];
-
-    L.polygon([world, amazonApprox], {
-      color: 'transparent',
-      fillColor: '#000',
-      fillOpacity: 0.72,
-      interactive: false
-    }).addTo(map);
-
-    // 3) CAMADA "BIOELÉTRICA" (MVP visual) — um heat-ish simples com círculos
-    //    (Depois a gente liga em dados reais.)
-    const points = [
-      {lat:-3.1, lng:-60.0, v:0.85},
-      {lat:-1.5, lng:-52.0, v:0.60},
-      {lat:-9.0, lng:-63.0, v:0.35},
-      {lat: 0.0, lng:-66.0, v:0.70},
-      {lat:-7.5, lng:-55.0, v:0.50},
-    ];
-
-    function colorByValue(v){
-      if (v < 0.4) return '#ff3b30';
-      if (v < 0.7) return '#ffd60a';
-      return '#34c759';
-    }
-
-    points.forEach(p=>{
-      L.circle([p.lat, p.lng], {
-        radius: 220000,
-        color: colorByValue(p.v),
-        fillColor: colorByValue(p.v),
-        fillOpacity: 0.22,
-        weight: 2
-      }).addTo(map);
-    });
-
-    // 4) ÍNDICE (MVP)
-    const idx = Math.round(
-      (points.reduce((a,b)=>a+b.v,0)/points.length)*100
-    );
-    document.getElementById('idx').textContent = idx;
-
-    // 5) GRÁFICO (MVP)
-    const labels = Array.from({length: 12}, (_,i)=>`T-${11-i}`);
-    const data = [62,64,61,66,68,70,72,71,73,74,76,idx];
-
-    new Chart(document.getElementById('ts'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Índice Bioecológico',
-          data,
-          tension: 0.35
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false }},
-        scales: {
-          y: { min: 0, max: 100, ticks:{ stepSize: 20 } }
-        }
-      }
-    });
-  </script>
 </body>
 </html>
