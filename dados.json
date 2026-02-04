@@ -1,0 +1,14 @@
+{
+  "bounds": {
+    "minLat": -18.0,
+    "maxLat": 6.5,
+    "minLon": -74.5,
+    "maxLon": -44.0
+  },
+  "points": [
+    { "lat": -3.10, "lon": -60.02, "valor": 82, "nome": "Manaus" },
+    { "lat": -1.45, "lon": -48.48, "valor": 44, "nome": "Belém" },
+    { "lat": -8.76, "lon": -63.90, "valor": 28, "nome": "Porto Velho" },
+    { "lat": -9.97, "lon": -67.81, "valor": 67, "nome": "Rio Branco" }
+  ]
+}
