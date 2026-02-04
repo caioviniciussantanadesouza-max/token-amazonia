@@ -1,83 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Token Amazônia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       background-color: #05080f;
       color: #e4e9f2;
-    }
-
-    /* TOP BAR (ícones no topo) */
-    .topbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(26,255,140,0.18);
-      background: rgba(5, 8, 15, 0.72);
-      backdrop-filter: blur(10px);
-    }
-
-    .topbar .pill {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border: 1px solid rgba(26,255,140,0.22);
-      border-radius: 999px;
-      background: rgba(0,0,0,0.22);
-      color: #cfeedd;
-      font-weight: bold;
-      letter-spacing: 0.2px;
-      user-select: none;
-    }
-
-    .navbtn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(26,255,140,0.22);
-      background: rgba(0,0,0,0.22);
-      color: #1aff8c;
-      cursor: pointer;
-      transition: 0.2s;
-      user-select: none;
-    }
-
-    .navbtn:hover {
-      background: rgba(26,255,140,0.10);
-      border-color: rgba(26,255,140,0.35);
-    }
-
-    .navbtn.active {
-      background: rgba(26,255,140,0.16);
-      border-color: rgba(26,255,140,0.55);
-      box-shadow: 0 0 18px rgba(26,255,140,0.10);
-    }
-
-    .navicon {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .navlabel {
-      font-size: 13px;
-      color: #dff7ea;
-      font-weight: 700;
     }
 
     /* HERO COM IMAGEM */
@@ -92,14 +24,11 @@
       align-items: center;
       text-align: center;
       padding: 40px 20px;
-
-      /* espaço para não ficar atrás do topo */
-      padding-top: 90px;
     }
 
     h1 {
       font-size: 2.6em;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       text-shadow: 0 2px 18px rgba(0,0,0,0.6);
     }
 
@@ -129,47 +58,86 @@
       color: #05080f;
     }
 
-    /* PAINEL SUSPENSO (abre com ícones) */
-    .drawer-wrap {
-      display: flex;
-      justify-content: center;
-      padding: 34px 16px 0 16px;
-      background: #05080f;
+    section {
+      padding: 70px 18px;
       border-top: 1px solid #0f1f3a;
+      background: #05080f;
     }
 
-    .drawer {
-      width: min(980px, 100%);
-      border: 1px solid rgba(26,255,140,0.20);
-      border-radius: 16px;
-      background: rgba(0,0,0,0.22);
-      backdrop-filter: blur(8px);
-      padding: 22px 18px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
     }
 
-    .drawer-title {
+    /* BARRA DE ÍCONES (em cima do texto, dentro da seção) */
+    .iconbar {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-wrap: wrap;
       gap: 10px;
-      margin: 0 0 12px 0;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .iconbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(26,255,140,0.25);
+      background: rgba(0,0,0,0.22);
       color: #dff7ea;
+      cursor: pointer;
+      transition: 0.2s;
+      user-select: none;
+    }
+
+    .iconbtn:hover {
+      background: rgba(26,255,140,0.10);
+      border-color: rgba(26,255,140,0.40);
+    }
+
+    .iconbtn.active {
+      background: rgba(26,255,140,0.18);
+      border-color: rgba(26,255,140,0.60);
+      box-shadow: 0 0 18px rgba(26,255,140,0.10);
+    }
+
+    .icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 800;
       letter-spacing: 0.2px;
     }
 
-    .drawer-title .bigicon { font-size: 22px; }
-    .drawer-title .text { font-weight: 800; }
-
-    .drawer p {
-      margin: 0;
-      max-width: 900px;
-      margin-inline: auto;
-      line-height: 1.7;
-      color: #e4e9f2;
+    /* CONTEÚDO SUSPENSO */
+    .panel {
+      border: 1px solid rgba(26,255,140,0.18);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.22);
+      backdrop-filter: blur(8px);
+      padding: 20px 18px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
     }
 
-    .drawer .status {
+    .panel h2 {
+      margin: 0 0 10px 0;
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+
+    .panel p {
+      margin: 0;
+      line-height: 1.7;
+      color: #e4e9f2;
+      text-align: center;
+    }
+
+    .status {
       margin-top: 14px;
       display: inline-block;
       padding: 10px 14px;
@@ -184,42 +152,16 @@
     .hidden { display: none; }
 
     footer {
-      padding: 36px 20px;
+      padding: 40px 20px;
       font-size: 0.9em;
       color: #8fa3c8;
       text-align: center;
       border-top: 1px solid #0f1f3a;
       background: #05080f;
     }
-
-    /* mobile: esconde texto dos botões e deixa só ícone */
-    @media (max-width: 560px) {
-      .navlabel { display: none; }
-      .topbar { justify-content: space-between; }
-    }
   </style>
 </head>
 <body>
-
-<!-- BARRA DE ÍCONES NO TOPO -->
-<div class="topbar">
-  <div class="pill">TOKEN AMAZÔNIA</div>
-
-  <button class="navbtn" id="btn-sobre" type="button" data-target="sobre">
-    <span class="navicon">🌍</span>
-    <span class="navlabel">O que é</span>
-  </button>
-
-  <button class="navbtn" id="btn-funciona" type="button" data-target="funciona">
-    <span class="navicon">⚙️</span>
-    <span class="navlabel">Como funciona</span>
-  </button>
-
-  <button class="navbtn" id="btn-dashboard" type="button" data-target="dash">
-    <span class="navicon">📊</span>
-    <span class="navlabel">Dashboard</span>
-  </button>
-</div>
 
 <header>
   <h1>Monitoramento Bioecológico da Amazônia</h1>
@@ -227,69 +169,67 @@
     Prova visual, pública e verificável da dinâmica ecológica da Amazônia,
     baseada exclusivamente em dados ambientais de satélite.
   </p>
-  <a class="btn" href="#painel">Abrir Painel</a>
+  <a class="btn" href="#info">Abrir Informações</a>
 </header>
 
-<!-- PAINEL SUSPENSO -->
-<div id="painel" class="drawer-wrap">
-  <div class="drawer">
-    <!-- SOBRE -->
-    <div id="sobre" class="drawer-page hidden">
-      <div class="drawer-title">
-        <span class="bigicon">🌍</span>
-        <span class="text">O que é o Token Amazônia</span>
-      </div>
-      <p>
-        O Token Amazônia é um projeto de transparência ambiental que utiliza dados públicos
-        de satélite para monitorar, em escala continental, o estado ecológico da floresta amazônica.
-        Este site funciona como a vitrine técnica e institucional do sistema.
-      </p>
+<section id="info">
+  <div class="wrap">
+
+    <!-- ÍCONES EM CIMA DO TEXTO -->
+    <div class="iconbar">
+      <button class="iconbtn" type="button" data-target="sobre">
+        <span class="icon">🌍</span><span class="label">O que é</span>
+      </button>
+
+      <button class="iconbtn" type="button" data-target="funciona">
+        <span class="icon">⚙️</span><span class="label">Como funciona</span>
+      </button>
+
+      <button class="iconbtn" type="button" data-target="dashboard">
+        <span class="icon">📊</span><span class="label">Dashboard</span>
+      </button>
     </div>
 
-    <!-- COMO FUNCIONA -->
-    <div id="funciona" class="drawer-page hidden">
-      <div class="drawer-title">
-        <span class="bigicon">⚙️</span>
-        <span class="text">Como funciona</span>
-      </div>
-      <p>
-        Dados do programa Sentinel-2 são processados continuamente por meio do Google Earth Engine.
-        A partir desses dados, é gerado um índice ecológico sintético que representa a atividade
-        biológica da Amazônia ao longo do tempo.
-      </p>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="dash" class="drawer-page hidden">
-      <div class="drawer-title">
-        <span class="bigicon">📊</span>
-        <span class="text">Dashboard Amazônia</span>
+    <!-- CONTEÚDO “SUSPENSO” (abre/fecha aqui) -->
+    <div class="panel">
+      <div id="placeholder">
+        <h2>Selecione um ícone acima</h2>
+        <p>Clique em 🌍, ⚙️ ou 📊 para abrir o conteúdo.</p>
       </div>
 
-      <div class="status">
-        ● Sistema ativo — Amazônia<br>
-        Dados públicos • Atualização contínua
+      <div id="sobre" class="hidden">
+        <h2>O que é o Token Amazônia</h2>
+        <p>
+          O Token Amazônia é um projeto de transparência ambiental que utiliza dados públicos
+          de satélite para monitorar, em escala continental, o estado ecológico da floresta amazônica.
+          Este site funciona como a vitrine técnica e institucional do sistema.
+        </p>
       </div>
 
-      <p style="margin-top: 14px;">
-        O painel interativo exibirá mapas e séries temporais com base em dados oficiais
-        de sensoriamento remoto.
-      </p>
-    </div>
-
-    <!-- TEXTO PADRÃO (quando nada foi clicado) -->
-    <div id="placeholder" class="drawer-page">
-      <div class="drawer-title">
-        <span class="bigicon">🧭</span>
-        <span class="text">Selecione um ícone acima</span>
+      <div id="funciona" class="hidden">
+        <h2>Como funciona</h2>
+        <p>
+          Dados do programa Sentinel-2 são processados continuamente por meio do Google Earth Engine.
+          A partir desses dados, é gerado um índice ecológico sintético que representa a atividade
+          biológica da Amazônia ao longo do tempo.
+        </p>
       </div>
-      <p>
-        Clique em <b>🌍</b>, <b>⚙️</b> ou <b>📊</b> no topo para abrir o conteúdo.
-      </p>
+
+      <div id="dashboard" class="hidden">
+        <h2>Dashboard Amazônia</h2>
+        <div class="status">
+          ● Sistema ativo — Amazônia<br>
+          Dados públicos • Atualização contínua
+        </div>
+        <p style="margin-top:14px;">
+          O painel interativo exibirá mapas e séries temporais com base em dados oficiais
+          de sensoriamento remoto.
+        </p>
+      </div>
     </div>
 
   </div>
-</div>
+</section>
 
 <footer>
   <p>
@@ -300,18 +240,13 @@
 </footer>
 
 <script>
-  const buttons = document.querySelectorAll(".navbtn");
-  const pages = document.querySelectorAll(".drawer-page");
+  const buttons = document.querySelectorAll(".iconbtn");
   const placeholder = document.getElementById("placeholder");
+  const blocks = ["sobre", "funciona", "dashboard"].map(id => document.getElementById(id));
 
-  function show(targetId) {
-    // fecha tudo
-    pages.forEach(p => p.classList.add("hidden"));
+  function hideAll() {
+    blocks.forEach(b => b.classList.add("hidden"));
     placeholder.classList.add("hidden");
-
-    // abre o alvo
-    const el = document.getElementById(targetId);
-    if (el) el.classList.remove("hidden");
   }
 
   function clearActive() {
@@ -320,24 +255,22 @@
 
   buttons.forEach(btn => {
     btn.addEventListener("click", () => {
-      const target = btn.getAttribute("data-target");
-
-      // se clicar no mesmo já aberto: fecha (volta pro placeholder)
-      const already = btn.classList.contains("active");
+      const targetId = btn.getAttribute("data-target");
+      const targetEl = document.getElementById(targetId);
+      const alreadyOpen = btn.classList.contains("active");
 
       clearActive();
 
-      if (already) {
-        pages.forEach(p => p.classList.add("hidden"));
+      if (alreadyOpen) {
+        // se clicar no mesmo: fecha e volta pro placeholder
+        blocks.forEach(b => b.classList.add("hidden"));
         placeholder.classList.remove("hidden");
         return;
       }
 
       btn.classList.add("active");
-      show(target);
-
-      // rola até o painel suspenso
-      document.getElementById("painel").scrollIntoView({ behavior: "smooth" });
+      hideAll();
+      targetEl.classList.remove("hidden");
     });
   });
 </script>
