@@ -1,8 +1,9 @@
 {
   "points": [
-    { "lat": -3.1000, "lon": -60.0000, "bio": 82 },
-    { "lat": -2.9000, "lon": -54.7000, "bio": 45 },
-    { "lat": -8.1000, "lon": -63.9000, "bio": 18 },
-    { "lat": -4.3000, "lon": -50.2000, "bio": 67 }
+    {"nome":"Ponto 01","lat":-3.10,"lon":-60.02,"valor":82},
+    {"nome":"Ponto 02","lat":-2.60,"lon":-55.00,"valor":55},
+    {"nome":"Ponto 03","lat":-4.20,"lon":-52.20,"valor":28},
+    {"nome":"Ponto 04","lat":-7.10,"lon":-63.90,"valor":70},
+    {"nome":"Ponto 05","lat":-9.80,"lon":-56.60,"valor":40}
   ]
 }
