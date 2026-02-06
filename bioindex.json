@@ -1,0 +1,7 @@
+{
+  "updated_at": null,
+  "abiotic": { "temp_c": null, "precip_mm": null, "humidity": null },
+  "biotic": { "ndvi_layer": "NASA GIBS (WMS)" },
+  "disturbance": { "fires_red": 0, "fires_yellow": 0, "fires_green": 0 },
+  "IEA": null
+}
