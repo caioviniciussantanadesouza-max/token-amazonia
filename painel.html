@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel — Observatório Amazônia</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#05080f;
+  color:#e4e9f2;
+}
+
+.top{
+  padding:14px 18px;
+  background:#070c16;
+  border-bottom:1px solid #1aff8c30;
+  font-size:14px;
+}
+
+#map{
+  height:calc(100vh - 50px);
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+Sistema ativo — Amazônia • Dados públicos • Atualização contínua
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+var map = L.map('map', {zoomControl:false}).setView([-5,-60],4);
+
+// Satélite real
+L.tileLayer(
+  'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+  {maxZoom:9}
+).addTo(map);
+</script>
+
+</body>
+</html>
