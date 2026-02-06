@@ -5,494 +5,315 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Painel Amazônia — Token Amazônia</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
   <style>
     :root{
       --bg:#05080f;
       --panel: rgba(6,10,18,.78);
-      --panel2: rgba(6,10,18,.62);
       --line: rgba(26,255,140,.25);
-      --line2: rgba(26,255,140,.18);
       --neon:#1aff8c;
       --text:#e4e9f2;
       --muted:#9bb0d3;
-      --warn:#ffd23c;
-      --bad:#ff3c3c;
-      --good:#1aff8c;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(1200px 600px at 50% 0%, rgba(26,255,140,.08), transparent 60%),
+                  var(--bg);
+      color: var(--text);
     }
 
-    *{ box-sizing:border-box; }
-    html, body { height: 100%; margin: 0; background: var(--bg); }
-    body { font-family: Arial, Helvetica, sans-serif; color: var(--text); overflow: hidden; }
-
-    /* ====== FUNDO / HUD FEEL ====== */
-    .bgfx{
-      position: fixed; inset: 0; z-index: 0;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(40,110,255,.12), transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(26,255,140,.10), transparent 45%),
-        radial-gradient(circle at 50% 90%, rgba(255,210,60,.06), transparent 40%),
-        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.70));
-      pointer-events: none;
-    }
-    .scanlines{
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,.03),
-        rgba(255,255,255,.03) 1px,
-        rgba(0,0,0,0) 4px,
-        rgba(0,0,0,0) 7px
-      );
-      mix-blend-mode: overlay;
-      opacity: .25;
-    }
-
-    /* ====== GRID LAYOUT ====== */
-    .grid{
-      position: relative;
-      z-index: 2;
-      height: 100vh;
-      width: 100vw;
-      display: grid;
-      grid-template-columns: 340px 1fr 340px;
-      grid-template-rows: 86px 1fr 140px;
-      gap: 14px;
-      padding: 14px;
-    }
-
-    /* Top bar */
-    .topbar{
-      grid-column: 1 / 4;
-      grid-row: 1;
+    /* Top HUD */
+    .topHud{
+      position:sticky;
+      top:0;
+      z-index:999;
       display:flex;
       align-items:center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      background: var(--panel);
-      border:1px solid var(--line);
-      border-radius: 18px;
+      justify-content:space-between;
+      gap:16px;
+      padding:14px 16px;
+      background: rgba(0,0,0,.55);
+      border-bottom:1px solid rgba(26,255,140,.18);
       backdrop-filter: blur(10px);
-      box-shadow: 0 12px 40px rgba(0,0,0,.45);
     }
     .brand{
-      display:flex; flex-direction:column; gap:4px;
-      min-width: 220px;
+      display:flex; flex-direction:column;
+      line-height:1.1;
     }
-    .brand .title{
-      font-weight: 900; letter-spacing:.3px; font-size: 15px;
-    }
-    .brand .sub{
-      font-size: 12px; color: rgba(228,233,242,.78);
-    }
+    .brand .t1{ font-weight:900; letter-spacing:.2px; }
+    .brand .t2{ color: rgba(228,233,242,.75); font-size:.9em; margin-top:3px; }
+
     .chips{
-      display:flex; gap:10px; flex-wrap: wrap; justify-content: center;
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
     }
     .chip{
-      display:flex; align-items:center; gap:8px;
-      padding: 10px 14px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
+      border:1px solid var(--line);
+      color: var(--text);
       background: rgba(0,0,0,.25);
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:800;
       cursor:pointer;
       user-select:none;
       transition:.2s;
-      font-weight: 800;
-      white-space: nowrap;
+      white-space:nowrap;
     }
-    .chip:hover{
-      border-color: rgba(26,255,140,.55);
-      box-shadow: 0 0 18px rgba(26,255,140,.15);
-    }
+    .chip:hover{ border-color: rgba(26,255,140,.55); box-shadow:0 0 18px rgba(26,255,140,.12); }
+
     .actions{
-      display:flex; gap:10px; align-items:center;
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
     }
     .btn{
-      padding:10px 14px;
       border:1px solid var(--line);
-      border-radius:999px;
-      background: rgba(0,0,0,.25);
       color: var(--text);
-      text-decoration:none;
-      font-weight: 900;
-      transition:.2s;
+      background: rgba(0,0,0,.25);
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:900;
       cursor:pointer;
+      user-select:none;
+      transition:.2s;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
     }
-    .btn:hover{
-      border-color: rgba(26,255,140,.55);
-      box-shadow:0 0 18px rgba(26,255,140,.15);
-    }
+    .btn:hover{ border-color: rgba(26,255,140,.55); box-shadow:0 0 18px rgba(26,255,140,.12); }
 
-    /* Side panels */
-    .panel{
+    /* Layout */
+    .wrap{
+      display:grid;
+      grid-template-columns: 320px 1fr 320px;
+      gap:14px;
+      padding:14px;
+    }
+    .card{
       background: var(--panel);
       border:1px solid var(--line);
-      border-radius: 18px;
+      border-radius:16px;
+      padding:14px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 12px 40px rgba(0,0,0,.45);
-      overflow: hidden;
-      position: relative;
+      min-height: 120px;
     }
-    .panelHeader{
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .panelHeader .h{
-      font-weight: 900;
+    .card h3{
+      margin:0 0 10px;
+      font-size:1em;
       letter-spacing:.2px;
-      font-size: 13px;
-    }
-    .panelBody{
-      padding: 12px 14px;
-      color: rgba(228,233,242,.88);
-      font-size: 12px;
-      line-height: 1.5;
     }
     .muted{ color: var(--muted); }
 
-    .left{ grid-column:1; grid-row:2; }
-    .right{ grid-column:3; grid-row:2; }
-    .bottom{
-      grid-column: 1 / 4;
-      grid-row: 3;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
+    /* MAP */
+    .mapCard{
+      padding:0;
+      overflow:hidden;
+      border-radius:18px;
     }
-
-    /* Center map frame */
-    .center{
-      grid-column:2;
-      grid-row:2;
-      position: relative;
-      border-radius: 18px;
-      overflow: hidden;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.30);
-      box-shadow: 0 12px 50px rgba(0,0,0,.55);
+    #map{
+      width:100%;
+      height: 520px;
+      background:#000;
     }
-    #map{ height: 100%; width: 100%; background: #05080f; }
-
-    /* Hologram overlay */
-    .holoOverlay{
-      position:absolute; inset:0;
-      pointer-events:none;
-      z-index: 500;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(26,255,140,.08), transparent 45%),
-        radial-gradient(circle at 30% 30%, rgba(40,110,255,.07), transparent 40%),
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0));
-      mix-blend-mode: screen;
-      opacity: .85;
-    }
-    .holoFrame{
-      position:absolute; inset: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(26,255,140,.22);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
-      pointer-events:none;
-      z-index: 600;
-    }
-    .corner{
-      position:absolute; width: 26px; height: 26px;
-      border: 2px solid rgba(26,255,140,.40);
-      border-right: none; border-bottom:none;
-      z-index: 650;
-      pointer-events:none;
-      filter: drop-shadow(0 0 10px rgba(26,255,140,.18));
-    }
-    .c1{ top: 10px; left: 10px; border-right:none; border-bottom:none; }
-    .c2{ top: 10px; right: 10px; transform: rotate(90deg); }
-    .c3{ bottom: 10px; right: 10px; transform: rotate(180deg); }
-    .c4{ bottom: 10px; left: 10px; transform: rotate(270deg); }
-
-    .mapTitle{
+    .mapHud{
       position:absolute;
-      top: 14px;
-      left: 14px;
-      z-index: 800;
-      background: var(--panel2);
-      border: 1px solid var(--line2);
-      border-radius: 14px;
-      padding: 10px 12px;
-      backdrop-filter: blur(10px);
-      display:flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 240px;
+      inset:auto auto 14px 14px;
+      z-index:500;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(26,255,140,.22);
+      border-radius:12px;
+      padding:10px 12px;
+      max-width: 340px;
+      backdrop-filter: blur(8px);
     }
-    .mapTitle .t{
-      font-weight: 900;
-      letter-spacing:.2px;
-      font-size: 13px;
-    }
-    .dot{
+    .mapHud .okdot{
       display:inline-block;
-      width:10px; height:10px;
-      border-radius:50%;
-      background: rgba(26,255,140,.95);
-      box-shadow: 0 0 12px rgba(26,255,140,.35);
-      vertical-align: middle;
-      margin-right: 8px;
-    }
-    .miniRow{
-      font-size: 12px;
-      color: rgba(228,233,242,.82);
+      width:9px; height:9px;
+      border-radius:99px;
+      background: var(--neon);
+      margin-right:8px;
+      box-shadow:0 0 12px rgba(26,255,140,.35);
     }
 
+    /* Legend */
     .legend{
-      position:absolute;
-      bottom: 14px;
-      left: 14px;
-      z-index: 800;
-      background: var(--panel2);
-      border: 1px solid var(--line2);
-      border-radius: 14px;
-      padding: 10px 12px;
-      backdrop-filter: blur(10px);
-      width: 270px;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(26,255,140,.18);
+      background: rgba(0,0,0,.22);
     }
-    .legend .h{ font-weight: 900; font-size: 12px; margin-bottom: 8px; }
     .bar{
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255,60,60,.95), rgba(255,210,60,.95), rgba(26,255,140,.95));
-      border: 1px solid rgba(255,255,255,.08);
+      height:10px;
+      border-radius:999px;
+      background: linear-gradient(90deg,
+        rgba(255,65,65,.95),
+        rgba(255,200,0,.95),
+        rgba(26,255,140,.95)
+      );
+      border:1px solid rgba(255,255,255,.08);
     }
-    .legend .row{
-      display:flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: rgba(228,233,242,.78);
-      margin-top: 6px;
+    .legendRow{
+      display:flex; justify-content:space-between;
+      font-size:.82em;
+      color: rgba(228,233,242,.75);
+      margin-top:6px;
     }
 
-    /* Pulse marker (divIcon) */
-    .pulse{
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      position: relative;
-      box-shadow: 0 0 18px rgba(26,255,140,.25);
-      border: 2px solid rgba(255,255,255,.25);
-      background: rgba(26,255,140,.90);
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:8px 10px;
+      font-size:.92em;
     }
-    .pulse::after{
-      content:"";
-      position:absolute;
-      inset:-12px;
-      border-radius: 50%;
-      background: currentColor;
-      opacity: .10;
-      animation: ping 1.8s infinite;
-    }
-    @keyframes ping{
-      0%{ transform: scale(.35); opacity: .18; }
-      100%{ transform: scale(1.2); opacity: 0; }
+    .kv .k{ color: rgba(228,233,242,.75); }
+    .kv .v{ font-weight:900; }
+
+    .small{
+      font-size:.85em;
+      color: rgba(228,233,242,.70);
+      line-height:1.5;
     }
 
     /* Modal */
     .modalOverlay{
-      position:fixed; inset:0;
+      position:fixed;
+      inset:0;
       background: rgba(0,0,0,.75);
       display:none;
       align-items:center;
       justify-content:center;
-      z-index: 99999;
-      padding: 16px;
+      z-index:2000;
+      padding:14px;
     }
     .modal{
-      width:min(860px, calc(100vw - 28px));
-      background:var(--panel);
+      width:min(860px, 100%);
+      background: var(--panel);
       border:1px solid var(--line);
       border-radius:18px;
       padding:18px;
       backdrop-filter: blur(10px);
       box-shadow:0 10px 40px rgba(0,0,0,.55);
     }
-    .modalTitle{ font-weight:900; font-size: 16px; }
-    .modalBody{ margin-top:10px; color:#dfe7ff; line-height:1.6; font-size: 13px; }
+    .modalTop{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding-bottom:10px; border-bottom:1px solid rgba(26,255,140,.12);
+    }
+    .modalTitle{ font-weight:900; }
     .close{
-      float:right;
       cursor:pointer;
       font-weight:900;
       border:1px solid var(--line);
       border-radius:999px;
-      padding:6px 10px;
-      background: rgba(0,0,0,.20);
+      padding:8px 12px;
     }
     .close:hover{ border-color: rgba(26,255,140,.55); }
-
-    ul.bullet{ padding-left:18px; margin: 10px 0; }
+    .modalBody{ padding-top:12px; line-height:1.65; color:#dfe7ff; }
+    ul.bullet{ padding-left:18px; }
     ul.bullet li{ margin:8px 0; }
 
-    /* Fallback */
-    .fallback{
-      position: fixed;
-      inset: 0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background: #05080f;
-      z-index: 200000;
-      padding: 24px;
-      text-align:center;
-    }
-    .fallback .card{
-      max-width: 760px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-    }
-
-    /* Leaflet fine-tune */
-    .leaflet-container{ background:#05080f; }
-    .leaflet-control-attribution{ display:none !important; }
-    .leaflet-popup-content{ font-size: 12px; }
-
-    @media (max-width: 980px){
-      body{ overflow:auto; }
-      .grid{
-        height: auto;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
-      }
-      .topbar{ grid-column:1; }
-      .left{ grid-column:1; grid-row:auto; }
-      .center{ grid-column:1; height: 66vh; min-height: 520px; }
-      .right{ grid-column:1; }
-      .bottom{ grid-column:1; grid-template-columns: 1fr; }
+    @media (max-width: 1100px){
+      .wrap{ grid-template-columns: 1fr; }
+      #map{ height: 520px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="bgfx"></div>
-  <div class="scanlines"></div>
+  <div class="topHud">
+    <div class="brand">
+      <div class="t1">PAINEL AMAZÔNIA — Monitoramento Bioecológico</div>
+      <div class="t2">Dados públicos • Atualização contínua • BioIndex (0–100)</div>
+    </div>
 
-  <div class="grid">
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">PAINEL AMAZÔNIA — Monitoramento Bioecológico</div>
-        <div class="sub">Dados públicos • Atualização contínua • Escala 0–100</div>
+    <div class="chips">
+      <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
+      <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
+      <div class="chip" onclick="openModal('painel')">📊 Painel</div>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="index.html">← Voltar</a>
+      <button class="btn" id="btnAtualizar" type="button">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h3>🌐 Camadas Públicas</h3>
+      <div class="small">
+        Base: Satélite (mundo real)<br>
+        Fonte: ESRI World Imagery (visual satélite)
       </div>
-
-      <div class="chips">
-        <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
-        <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
-        <div class="chip" onclick="openModal('painel')">📊 Painel</div>
+      <hr style="border:none;border-top:1px solid rgba(26,255,140,.12);margin:12px 0">
+      <div class="kv">
+        <div class="k">Status</div><div class="v" id="stStatus">carregando…</div>
+        <div class="k">Atualização</div><div class="v" id="stUpdate">—</div>
       </div>
-
-      <div class="actions">
-        <a class="btn" href="index.html">⬅ Voltar</a>
-        <button class="btn" onclick="atualizarTudo()">↻ Atualizar</button>
+      <div class="small" style="margin-top:10px">
+        Pontos: BioIndex calculado com <b>dados climáticos públicos</b> (umidade, nuvens, precipitação).<br>
+        Próximo passo: combinar com índice por satélite (NDVI/Sentinel/GEE).
       </div>
     </div>
 
-    <!-- LEFT PANEL -->
-    <div class="panel left">
-      <div class="panelHeader">
-        <div class="h">📡 Camadas Públicas</div>
-        <div class="muted" id="camadasStatus">online</div>
-      </div>
-      <div class="panelBody">
-        <div><strong>Base:</strong> Satélite (mundo real)</div>
-        <div class="muted">Fonte: Esri World Imagery (visual satélite)</div>
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,.06); margin:10px 0;">
-        <div><strong>Pontos Bio (0–100):</strong></div>
-        <div class="muted">
-          Agora: calculado com dados climáticos públicos em tempo real (umidade, nuvens e precipitação).
-          Próximo passo: trocar para índice por satélite (NDVI/Sentinel).
-        </div>
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,.06); margin:10px 0;">
-        <div><strong>Atualização:</strong> <span id="lastUpdate">—</span></div>
-      </div>
-    </div>
-
-    <!-- CENTER MAP -->
-    <div class="center">
+    <div class="card mapCard" style="position:relative">
       <div id="map"></div>
 
-      <div class="holoOverlay"></div>
-      <div class="holoFrame"></div>
-      <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
-
-      <div class="mapTitle">
-        <div class="t"><span class="dot"></span>Sistema ativo — Amazônia</div>
-        <div class="miniRow">BioIndex: <strong id="bioMedia">—</strong> (média)</div>
-        <div class="miniRow muted" id="statusMsg">Inicializando…</div>
-      </div>
-
-      <div class="legend">
-        <div class="h">Escala Bioecológica (0–100)</div>
-        <div class="bar"></div>
-        <div class="row"><span>Baixa</span><span>Média</span><span>Alta</span></div>
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="panel right">
-      <div class="panelHeader">
-        <div class="h">📊 Leituras em tempo real</div>
-        <div class="muted" id="pontosCount">0 pontos</div>
-      </div>
-      <div class="panelBody" id="rightBody">
-        <div><strong>Resumo</strong></div>
-        <div class="muted">
-          Clique em um ponto no mapa para ver os dados públicos usados no cálculo do índice.
+      <div class="mapHud">
+        <div style="font-weight:900;margin-bottom:6px;">
+          <span class="okdot"></span>Sistema ativo — Amazônia
         </div>
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,.06); margin:10px 0;">
-        <div><strong>Último ponto selecionado</strong></div>
-        <div class="muted" id="selInfo">—</div>
+        <div class="small" id="mapInfo">
+          Carregando dados públicos… clique nos pontos.
+        </div>
+
+        <div class="legend">
+          <div style="font-weight:900; margin-bottom:6px;">Escala Bioecológica (0–100)</div>
+          <div class="bar"></div>
+          <div class="legendRow"><span>Perigo</span><span>Atenção</span><span>Bom</span></div>
+        </div>
       </div>
     </div>
 
-    <!-- BOTTOM ROW -->
-    <div class="bottom">
-      <div class="panel">
-        <div class="panelHeader">
-          <div class="h">📈 Série temporal (MVP)</div>
-          <div class="muted">placeholder</div>
-        </div>
-        <div class="panelBody">
-          <div class="muted">
-            Próximo passo: gráfico real de NDVI/biomassa (via Sentinel-2/GEE).  
-            Hoje o painel já está pronto (layout + mapa + pontos + legenda + HUD).
-          </div>
-        </div>
+    <div class="card">
+      <h3>📡 Leituras em tempo real</h3>
+      <div class="kv">
+        <div class="k">Pontos carregados</div><div class="v" id="stCount">—</div>
+        <div class="k">Último ponto</div><div class="v" id="stLast">—</div>
       </div>
-
-      <div class="panel">
-        <div class="panelHeader">
-          <div class="h">🛰️ Integridade / Cobertura</div>
-          <div class="muted">placeholder</div>
-        </div>
-        <div class="panelBody">
-          <div class="muted">
-            Aqui entraremos com camadas reais (desmatamento, fogo, rios, etc.) conforme você escolher
-            as fontes oficiais (INPE, MapBiomas, NASA, etc.).
-          </div>
-        </div>
+      <hr style="border:none;border-top:1px solid rgba(26,255,140,.12);margin:12px 0">
+      <div class="small">
+        Clique em um ponto no mapa para ver:
+        <b>Umidade</b>, <b>Nuvens</b>, <b>Precipitação</b> e o <b>BioIndex</b>.
       </div>
+    </div>
 
-      <div class="panel">
-        <div class="panelHeader">
-          <div class="h">🔒 Transparência</div>
-          <div class="muted">legal</div>
-        </div>
-        <div class="panelBody">
-          Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
-          <span class="muted">Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.</span>
-        </div>
+    <div class="card">
+      <h3>🧪 Série temporal (MVP)</h3>
+      <div class="small">
+        Placeholder do gráfico temporal.<br>
+        Depois colocamos a série real (por satélite / API).
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧩 Integridade / Cobertura</h3>
+      <div class="small">
+        Placeholder de camadas reais (desmatamento, fogo, rios, etc.).<br>
+        Depois conectamos fontes oficiais.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔒 Transparência</h3>
+      <div class="small">
+        Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
+        Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.
       </div>
     </div>
   </div>
@@ -500,209 +321,166 @@
   <!-- MODAL -->
   <div class="modalOverlay" id="modalOverlay" onclick="overlayClick(event)">
     <div class="modal">
-      <div class="close" onclick="closeModal()">Fechar ✕</div>
-      <div class="modalTitle" id="modalTitle"></div>
+      <div class="modalTop">
+        <div class="modalTitle" id="modalTitle"></div>
+        <div class="close" onclick="closeModal()">Fechar ✕</div>
+      </div>
       <div class="modalBody" id="modalBody"></div>
     </div>
   </div>
 
-  <div class="fallback" id="fallback">
-    <div class="card">
-      <h2 style="margin:0 0 8px;">Erro: o painel não carregou</h2>
-      <p style="margin:0 0 10px; color: rgba(228,233,242,.85); line-height:1.55;">
-        O navegador não conseguiu baixar a biblioteca do mapa (Leaflet). Isso gera <strong>"L is not defined"</strong>.
-      </p>
-      <p style="margin:0; color: rgba(228,233,242,.75); line-height:1.55;">
-        Recarregue com <strong>Ctrl+F5</strong>. Se persistir, me diga e eu troco o CDN automaticamente.
-      </p>
-    </div>
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // ====== Helpers HUD ======
-    function setStatus(msg){ document.getElementById("statusMsg").textContent = msg; }
-    function setLastUpdate(){
-      const d = new Date();
-      document.getElementById("lastUpdate").textContent =
-        d.toLocaleString("pt-BR", { hour12:false });
-    }
-
-    // Leaflet fallback
-    if (typeof L === "undefined") {
-      document.getElementById("fallback").style.display = "flex";
-      throw new Error("Leaflet não carregou (L is undefined).");
-    }
-
     // ====== MAPA ======
-    const map = L.map("map", { zoomControl: false, attributionControl: false });
+    const map = L.map("map", { zoomControl: true }).setView([-6.0, -60.0], 4);
 
-    // Satélite real (sem labels)
-    // (OBS: Esri tem termos próprios; para MVP em Pages funciona bem)
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 19
-    }).addTo(map);
+    // Satélite sem rótulos
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 18, attribution: "Esri" }
+    ).addTo(map);
 
-    // Limite “macro Amazônia” (aprox.)
-    const amazonBounds = L.latLngBounds(
-      L.latLng(-20.5, -79.5),
-      L.latLng(  6.5, -44.0)
-    );
-    map.fitBounds(amazonBounds);
-    map.setMaxBounds(amazonBounds.pad(0.30));
-    map.on("drag", () => map.panInsideBounds(amazonBounds.pad(0.30), { animate: false }));
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-
-    // Camadas
     const layerPontos = L.layerGroup().addTo(map);
 
-    // ====== Cor por valor ======
-    function corPorValor(v){
-      const n = Number(v);
-      if (Number.isNaN(n)) return "rgba(160,170,190,.85)";
-      if (n < 34) return "rgba(255,60,60,.95)";
-      if (n < 67) return "rgba(255,210,60,.95)";
+    // ====== CORES (verde bom, amarelo atenção, vermelho perigo) ======
+    function corPorValor(valor){
+      const v = Number(valor);
+      if (Number.isNaN(v)) return "rgba(180,190,210,.9)";
+
+      // perigo (0–39)
+      if (v < 40) return "rgba(255,65,65,.95)";
+      // atenção (40–69)
+      if (v < 70) return "rgba(255,200,0,.95)";
+      // bom (70–100)
       return "rgba(26,255,140,.95)";
     }
 
-    // ====== Ícone pulsante com cor ======
-    function pulseIcon(cssColor){
-      const div = document.createElement("div");
-      div.className = "pulse";
-      div.style.background = cssColor;
-      div.style.color = cssColor;      // usado no ::after (currentColor)
-      div.style.borderColor = "rgba(255,255,255,.22)";
-      return L.divIcon({
-        className: "",
-        html: div.outerHTML,
-        iconSize: [14,14],
-        iconAnchor: [7,7]
-      });
+    // ====== BIOINDEX (0–100) COM DADOS REAIS (Open-Meteo) ======
+    // Regras simples (MVP):
+    // - mais umidade e mais nuvens tendem a favorecer "atividade" (no conceito)
+    // - precipitação conta forte (até 5mm/h já pesa bastante)
+    function calcBioIndex(hum, cloud, precip){
+      const h = Math.max(0, Math.min(100, Number(hum)));
+      const c = Math.max(0, Math.min(100, Number(cloud)));
+      const p = Math.max(0, Number(precip));
+
+      // normaliza precip: 0mm => 0 | 5mm+ => 100
+      const pNorm = Math.max(0, Math.min(100, (p / 5) * 100));
+
+      // pesos (ajuste fino depois)
+      const bio = (0.45 * h) + (0.25 * c) + (0.30 * pNorm);
+      return Math.round(Math.max(0, Math.min(100, bio)));
     }
 
-    function limparPontos(){ layerPontos.clearLayers(); }
-
-    // ====== Pontos fixos (macro) — você pode mudar depois ======
-    // (coordenadas espalhadas no bioma pra ter leitura “continental”)
-    const pontosBase = [
-      { nome:"Noroeste", lat:-2.7,  lon:-67.8 },
-      { nome:"Manaus",   lat:-3.1,  lon:-60.0 },
-      { nome:"Tapajós",  lat:-4.3,  lon:-55.0 },
-      { nome:"Xingu",    lat:-3.6,  lon:-52.2 },
-      { nome:"Sul 1",    lat:-9.6,  lon:-63.9 },
-      { nome:"Sul 2",    lat:-10.6, lon:-56.6 },
-      { nome:"Leste",    lat:-2.0,  lon:-48.0 },
-      { nome:"Norte",    lat: 1.0,  lon:-60.5 }
-    ];
-
-    // ====== DADOS REAIS (clima ao vivo) via Open-Meteo ======
-    // Retorna: temperatura, umidade, nuvens e precipitação (público e sem chave)
-    async function fetchClima(lat, lon){
-      const url =
-        "https://api.open-meteo.com/v1/forecast" +
-        `?latitude=${encodeURIComponent(lat)}` +
-        `&longitude=${encodeURIComponent(lon)}` +
-        "&current=temperature_2m,relative_humidity_2m,precipitation,cloud_cover" +
-        "&timezone=UTC";
+    async function getDadosReais(lat, lon){
+      // Open-Meteo (sem chave)
+      const url = "https://api.open-meteo.com/v1/forecast"
+        + "?latitude=" + encodeURIComponent(lat)
+        + "&longitude=" + encodeURIComponent(lon)
+        + "&current=relative_humidity_2m,precipitation,cloud_cover"
+        + "&timezone=auto";
 
       const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error("Open-Meteo erro " + res.status);
-      return await res.json();
+      if(!res.ok) throw new Error("Falha Open-Meteo: " + res.status);
+
+      const j = await res.json();
+      if(!j.current) throw new Error("Open-Meteo sem campo current");
+
+      return {
+        humidity: j.current.relative_humidity_2m,
+        precipitation: j.current.precipitation,
+        cloud: j.current.cloud_cover,
+        time: j.current.time
+      };
     }
 
-    // ====== BioIndex REAL (derivado de dados reais) ======
-    // Fórmula simples (MVP): umidade pesa mais, nuvem + chuva influenciam
-    function calcBioIndex(current){
-      const hum = Number(current.relative_humidity_2m ?? 0); // 0-100
-      const cloud = Number(current.cloud_cover ?? 0);        // 0-100
-      const rain = Number(current.precipitation ?? 0);       // mm
-      const t = Number(current.temperature_2m ?? 0);         // °C
-
-      // normalizações / pesos (ajustáveis)
-      const rainBoost = Math.min(20, rain * 8);              // até +20
-      const cloudTerm = (100 - cloud) * 0.12;                // céu limpo ajuda um pouco (0-12)
-      const tempTerm = 12 - Math.min(12, Math.abs(t - 26));  // melhor perto de 26°C (0-12)
-
-      let bio = (hum * 0.58) + cloudTerm + rainBoost + tempTerm;
-      bio = Math.max(0, Math.min(100, Math.round(bio)));
-      return bio;
+    function limparPontos(){
+      layerPontos.clearLayers();
     }
 
-    // ====== Render ======
-    async function atualizarTudo(){
-      try{
-        setStatus("Atualizando dados públicos…");
-        document.getElementById("camadasStatus").textContent = "carregando";
-        limparPontos();
+    async function carregarDados(){
+      document.getElementById("stStatus").textContent = "carregando…";
+      document.getElementById("mapInfo").textContent = "Carregando dados públicos…";
+      document.getElementById("stLast").textContent = "—";
+      document.getElementById("stCount").textContent = "—";
 
-        // busca clima em paralelo (8 pontos)
-        const promises = pontosBase.map(async (p) => {
-          const j = await fetchClima(p.lat, p.lon);
-          const c = j.current || {};
-          const bio = calcBioIndex(c);
-          return { ...p, bio, current: c };
-        });
+      limparPontos();
 
-        const pontos = await Promise.all(promises);
+      const res = await fetch("dados.json", { cache: "no-store" });
+      if(!res.ok) throw new Error("Não achei dados.json (erro " + res.status + ")");
+      const data = await res.json();
 
-        // média
-        const media = Math.round(pontos.reduce((a,b)=>a + (b.bio||0), 0) / pontos.length);
-        document.getElementById("bioMedia").textContent = media;
+      const pts = data.points || [];
+      document.getElementById("stCount").textContent = String(pts.length);
 
-        // pins
-        let i = 0;
-        for(const p of pontos){
-          const color = corPorValor(p.bio);
+      // carrega um por um (simples e confiável)
+      for(const p of pts){
+        const lat = p.lat, lon = p.lon, nome = p.nome || "Ponto";
 
-          const m = L.marker([p.lat, p.lon], { icon: pulseIcon(color) });
+        let real;
+        try{
+          real = await getDadosReais(lat, lon);
+        }catch(e){
+          // Se der erro, marca como cinza e avisa no popup
+          const marker = L.circleMarker([lat, lon], {
+            radius: 7,
+            color: "rgba(180,190,210,.9)",
+            weight: 2,
+            fillColor: "rgba(180,190,210,.9)",
+            fillOpacity: 0.35
+          }).addTo(layerPontos);
 
-          const html =
-            `<strong>${p.nome}</strong><br>` +
-            `BioIndex: <strong>${p.bio}</strong><br>` +
-            `<span class="muted">Dados públicos (agora):</span><br>` +
-            `Umidade: ${p.current.relative_humidity_2m ?? "—"}%<br>` +
-            `Nuvens: ${p.current.cloud_cover ?? "—"}%<br>` +
-            `Chuva: ${p.current.precipitation ?? "—"} mm<br>` +
-            `Temp: ${p.current.temperature_2m ?? "—"} °C<br>` +
-            `<span class="muted">lat: ${p.lat.toFixed(3)} | lon: ${p.lon.toFixed(3)}</span>`;
+          marker.bindPopup(
+            `<strong>${nome}</strong><br>
+             Falha ao buscar dados reais.<br>
+             <span class="muted">${e.message}</span>`
+          );
 
-          m.bindPopup(html);
-
-          m.on("click", ()=>{
-            document.getElementById("selInfo").innerHTML =
-              `<strong>${p.nome}</strong><br>` +
-              `BioIndex: <strong>${p.bio}</strong><br>` +
-              `Umidade: ${p.current.relative_humidity_2m ?? "—"}% • ` +
-              `Nuvens: ${p.current.cloud_cover ?? "—"}% • ` +
-              `Chuva: ${p.current.precipitation ?? "—"} mm • ` +
-              `Temp: ${p.current.temperature_2m ?? "—"} °C`;
-          });
-
-          m.addTo(layerPontos);
-
-          i++;
+          continue;
         }
 
-        document.getElementById("pontosCount").textContent = `${pontos.length} pontos`;
-        document.getElementById("camadasStatus").textContent = "online";
-        setLastUpdate();
-        setStatus("Dados públicos carregados. Clique nos pontos.");
+        const bio = calcBioIndex(real.humidity, real.cloud, real.precipitation);
+        const c = corPorValor(bio);
 
-      }catch(err){
-        console.error(err);
-        setStatus("Falha ao carregar (rede/API). Tente Atualizar.");
-        document.getElementById("camadasStatus").textContent = "erro";
-        alert("Erro ao carregar dados públicos: " + err.message);
+        // Ponto
+        const marker = L.circleMarker([lat, lon], {
+          radius: 7,
+          color: c,
+          weight: 2,
+          fillColor: c,
+          fillOpacity: 0.40
+        }).addTo(layerPontos);
+
+        // Halo HUD
+        L.circleMarker([lat, lon], {
+          radius: 18,
+          color: c,
+          weight: 0,
+          fillColor: c,
+          fillOpacity: 0.12
+        }).addTo(layerPontos);
+
+        marker.on("click", () => {
+          document.getElementById("stLast").textContent = nome;
+        });
+
+        marker.bindPopup(
+          `<strong>${nome}</strong><br><br>
+           <b>BioIndex:</b> <span style="color:${c}">${bio}</span> / 100<br>
+           <b>Umidade:</b> ${real.humidity}%<br>
+           <b>Nuvens:</b> ${real.cloud}%<br>
+           <b>Precipitação:</b> ${real.precipitation} mm<br>
+           <span class="muted">Horário local: ${real.time}</span><br>
+           <span class="muted">lat: ${lat} | lon: ${lon}</span>`
+        );
+
+        document.getElementById("stUpdate").textContent = new Date().toLocaleString();
       }
+
+      document.getElementById("stStatus").textContent = "online";
+      document.getElementById("mapInfo").textContent = "Dados públicos carregados. Clique nos pontos.";
     }
-
-    // Inicializa
-    atualizarTudo();
-
-    // Atualiza automático (10 min)
-    setInterval(atualizarTudo, 10 * 60 * 1000);
 
     // ====== MODAIS ======
     const content = {
@@ -727,8 +505,8 @@
             <strong>BioIndex (0–100)</strong>.
           </p>
           <p class="muted">
-            Hoje: o BioIndex é derivado de dados climáticos públicos em tempo real (umidade, nuvens e precipitação).
-            Próximo passo: substituir/combinar com índice por satélite (NDVI/Sentinel).
+            Hoje: BioIndex derivado de dados climáticos públicos em tempo real (umidade, nuvens e precipitação).
+            Próximo passo: substituir/combinar com índice por satélite (NDVI/Sentinel/GEE).
           </p>
         `
       },
@@ -757,15 +535,27 @@
       bodyEl.innerHTML = item.body;
       overlay.style.display = "flex";
     }
-    function closeModal(){
-      document.getElementById("modalOverlay").style.display = "none";
+    function closeModal(){ document.getElementById("modalOverlay").style.display = "none"; }
+    function overlayClick(e){ if(e.target.id === "modalOverlay") closeModal(); }
+    document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
+
+    // ====== Atualização ======
+    async function atualizarTudo(){
+      try{
+        await carregarDados();
+      }catch(err){
+        alert("Erro: " + err.message);
+        document.getElementById("stStatus").textContent = "erro";
+      }
     }
-    function overlayClick(e){
-      if(e.target.id === "modalOverlay") closeModal();
-    }
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape") closeModal();
-    });
+
+    document.getElementById("btnAtualizar").addEventListener("click", atualizarTudo);
+
+    // Inicializa
+    atualizarTudo();
+
+    // Auto (10 min)
+    setInterval(atualizarTudo, 10 * 60 * 1000);
   </script>
 </body>
 </html>
