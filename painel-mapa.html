@@ -3,12 +3,11 @@ async function carregarDados(){
   const basePath = location.href.substring(0, location.href.lastIndexOf("/") + 1);
   const url = basePath + "fires.json?ts=" + Date.now();
 
-  // Mostra no HUD o que está acontecendo
+  // HUD
   document.getElementById("stStatus").textContent = "carregando…";
 
   const r = await fetch(url, { cache: "no-store" });
   if(!r.ok){
-    // Mostra erro no painel e também em alerta
     const msg = `Falha ao carregar fires.json (${r.status}). URL: ${url}`;
     document.getElementById("stStatus").textContent = "erro";
     throw new Error(msg);
@@ -46,12 +45,13 @@ async function carregarDados(){
     }))
   };
 
-  // Atualiza source/layer
+  // Atualiza se já existe
   if(map.getSource("fires")){
     map.getSource("fires").setData(geojson);
     return;
   }
 
+  // Cria source/layer (primeira vez)
   map.addSource("fires", { type: "geojson", data: geojson });
 
   map.addLayer({
