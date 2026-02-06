@@ -1,0 +1,60 @@
+name: Update bioindex.json (Open-Meteo)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate bioindex.json
+        run: |
+          python - << 'PY'
+          import json, datetime, urllib.request
+
+          # Ponto de referência no centro aproximado da Amazônia (ajuste depois)
+          lat, lon = -3.5, -62.0
+
+          # Open-Meteo: sem chave
+          url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            "&current=temperature_2m,relative_humidity_2m,precipitation"
+            "&timezone=UTC"
+          )
+
+          data = json.loads(urllib.request.urlopen(url, timeout=60).read().decode("utf-8"))
+          cur = data.get("current", {})
+
+          out = {
+            "updated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+            "abiotic": {
+              "temp_c": cur.get("temperature_2m"),
+              "precip_mm": cur.get("precipitation"),
+              "humidity": cur.get("relative_humidity_2m")
+            },
+            "biotic": { "ndvi_layer": "NASA GIBS (WMS)" },
+            "disturbance": { "fires_red": 0, "fires_yellow": 0, "fires_green": 0 },
+            "IEA": None
+          }
+
+          with open("bioindex.json","w",encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+
+          print("Generated bioindex.json")
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bioindex.json
+          git commit -m "Update bioindex.json" || exit 0
+          git push
