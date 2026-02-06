@@ -1,106 +1,75 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monitoramento Bioecológico da Amazônia</title>
-  <style>
-    :root{
-      --bg:#05080f;
-      --txt:rgba(228,233,242,.92);
-      --muted:rgba(228,233,242,.70);
-      --neon:#1AFF8C;
-      --stroke:rgba(15,31,58,.55);
-    }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-    header{
-      min-height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      position:relative;
-      overflow:hidden;
-      padding:42px 16px 110px;
-    }
-    header:before{
-      content:"";
-      position:absolute;inset:0;
-      background:
-        radial-gradient(800px 400px at 30% 20%, rgba(26,255,140,.12), transparent 60%),
-        radial-gradient(700px 420px at 70% 40%, rgba(26,255,140,.08), transparent 60%),
-        radial-gradient(900px 500px at 50% 80%, rgba(15,31,58,.35), transparent 60%);
-      pointer-events:none;
-    }
-    .topText{
-      position:absolute;
-      top:26px;
-      left:16px;
-      right:16px;
-      max-width:980px;
-      margin:0 auto;
-      text-align:center;
-      padding:14px 14px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(0,0,0,.25);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 0 22px rgba(26,255,140,.15);
-    }
-    h1{margin:0 0 8px;font-size:1.35rem;letter-spacing:.2px}
-    p{margin:0;color:var(--muted);line-height:1.45}
-    .btn{
-      margin-top:140px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:14px 18px;
-      border-radius:14px;
-      border:1px solid rgba(26,255,140,.35);
-      color:var(--neon);
-      background: rgba(0,0,0,.20);
-      cursor:pointer;
-      text-decoration:none;
-      user-select:none;
-      transition:.15s;
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-    .btn:hover{
-      background: var(--neon);
-      color:#05080f;
-      box-shadow: 0 0 28px rgba(26,255,140,.25);
-    }
-    footer{
-      position:absolute;
-      bottom:0;
-      left:0;
-      right:0;
-      padding:16px 14px;
-      text-align:center;
-      font-size:.85em;
-      color: rgba(228,233,242,.70);
-      border-top:1px solid rgba(15,31,58,.55);
-      background: linear-gradient(transparent, rgba(0,0,0,.35));
-    }
-    footer p{max-width:980px;margin:0 auto;line-height:1.45;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observatório Bioecológico da Amazônia</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background:#05080f;
+  color:#e4e9f2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  text-align:center;
+}
+
+.container{
+  max-width:900px;
+  padding:40px;
+}
+
+h1{
+  font-size:2.2em;
+  margin-bottom:20px;
+}
+
+p{
+  font-size:1.1em;
+  line-height:1.6;
+  color:#cdd7ee;
+}
+
+.btn{
+  margin-top:40px;
+  display:inline-block;
+  padding:16px 36px;
+  border:1px solid #1aff8c;
+  color:#1aff8c;
+  text-decoration:none;
+  border-radius:6px;
+  font-weight:bold;
+  transition:0.25s;
+}
+
+.btn:hover{
+  background:#1aff8c;
+  color:#05080f;
+}
+</style>
 </head>
+
 <body>
-<header>
-  <div class="topText">
-    <h1>Monitoramento Bioecológico da Amazônia</h1>
-    <p>Prova visual, pública e verificável da dinâmica ecológica da Amazônia, baseada exclusivamente em dados ambientais de satélite e clima.</p>
-  </div>
 
-  <a class="btn" href="painel-mapa.html">Acessar Painel</a>
+<div class="container">
+  <h1>Observatório Bioecológico da Amazônia</h1>
 
-  <footer>
-    <p>
-      Observatório Bioecológico Amazônico — transparência ambiental baseada em dados públicos.<br>
-      Este site não constitui oferta de investimento. Trata-se de monitoramento científico.
-    </p>
-  </footer>
-</header>
+  <p>
+    Um painel público que transforma dados ambientais reais
+    em uma leitura visual do estado ecológico da floresta.
+  </p>
+
+  <p>
+    Não mede preço.  
+    Mede condição ecológica.
+  </p>
+
+  <a class="btn" href="painel.html">Acessar Painel</a>
+</div>
+
 </body>
 </html>
