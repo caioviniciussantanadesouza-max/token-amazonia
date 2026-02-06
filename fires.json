@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-02-06T17:08:56Z",
+  "updated_at": "2026-02-06T18:03:46Z",
   "source": "NASA FIRMS",
   "dataset": "VIIRS_SNPP_NRT",
   "days_back": 2,
@@ -7653,6 +7653,90 @@
       "lon": -75.77686,
       "level": "yellow",
       "brightness": 298.56,
+      "confidence": "n"
+    },
+    {
+      "lat": -18.76218,
+      "lon": -44.51699,
+      "level": "yellow",
+      "brightness": 326.1,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03956,
+      "lon": -45.33559,
+      "level": "yellow",
+      "brightness": 337.28,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.0385,
+      "lon": -45.33466,
+      "level": "red",
+      "brightness": 343.9,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03407,
+      "lon": -45.34959,
+      "level": "yellow",
+      "brightness": 336.23,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03332,
+      "lon": -45.34292,
+      "level": "yellow",
+      "brightness": 336.01,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03292,
+      "lon": -45.3487,
+      "level": "yellow",
+      "brightness": 335.38,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03258,
+      "lon": -45.3363,
+      "level": "yellow",
+      "brightness": 334.82,
+      "confidence": "n"
+    },
+    {
+      "lat": -12.03222,
+      "lon": -45.34204,
+      "level": "yellow",
+      "brightness": 332.54,
+      "confidence": "n"
+    },
+    {
+      "lat": -4.92777,
+      "lon": -45.52931,
+      "level": "red",
+      "brightness": 340.28,
+      "confidence": "n"
+    },
+    {
+      "lat": -3.43989,
+      "lon": -45.38397,
+      "level": "yellow",
+      "brightness": 336.84,
+      "confidence": "n"
+    },
+    {
+      "lat": -1.47482,
+      "lon": -46.07747,
+      "level": "yellow",
+      "brightness": 328.42,
+      "confidence": "n"
+    },
+    {
+      "lat": -1.46447,
+      "lon": -46.09499,
+      "level": "yellow",
+      "brightness": 330.3,
       "confidence": "n"
     }
   ]
