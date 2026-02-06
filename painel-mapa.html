@@ -1,352 +1,98 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Painel Amazônia — Observatório</title>
+async function carregarDados(){
+  // Monta a URL correta (mesma pasta do painel, mesmo no GitHub Pages)
+  const basePath = location.href.substring(0, location.href.lastIndexOf("/") + 1);
+  const url = basePath + "fires.json?ts=" + Date.now();
 
-  <!-- Mapbox GL -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  // Mostra no HUD o que está acontecendo
+  document.getElementById("stStatus").textContent = "carregando…";
 
-  <style>
-    :root{
-      --bg:#05080f;
-      --panel: rgba(0,0,0,.28);
-      --stroke: rgba(15,31,58,.55);
-      --txt: rgba(228,233,242,.92);
-      --muted: rgba(228,233,242,.70);
-      --neon: #1AFF8C;
-      --red:#FF4D4D;
-      --yellow:#FFD84D;
-      --green:#38E27D;
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok){
+    // Mostra erro no painel e também em alerta
+    const msg = `Falha ao carregar fires.json (${r.status}). URL: ${url}`;
+    document.getElementById("stStatus").textContent = "erro";
+    throw new Error(msg);
+  }
+
+  const j = await r.json();
+  const points = (j.points || []).map(p => ({
+    ...p,
+    level: p.level || "green"
+  }));
+
+  // Stats
+  let g=0,y=0,rr=0;
+  for(const p of points){
+    if(p.level==="red") rr++;
+    else if(p.level==="yellow") y++;
+    else g++;
+  }
+  document.getElementById("nGreen").textContent = g;
+  document.getElementById("nYellow").textContent = y;
+  document.getElementById("nRed").textContent = rr;
+
+  document.getElementById("stTime").textContent =
+    j.updated_at ? new Date(j.updated_at).toLocaleString("pt-BR") : "—";
+
+  document.getElementById("stStatus").textContent = "ativo";
+
+  // GeoJSON
+  const geojson = {
+    type: "FeatureCollection",
+    features: points.map(p => ({
+      type: "Feature",
+      properties: p,
+      geometry: { type: "Point", coordinates: [p.lon, p.lat] }
+    }))
+  };
+
+  // Atualiza source/layer
+  if(map.getSource("fires")){
+    map.getSource("fires").setData(geojson);
+    return;
+  }
+
+  map.addSource("fires", { type: "geojson", data: geojson });
+
+  map.addLayer({
+    id: "fires-layer",
+    type: "circle",
+    source: "fires",
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 3.5, 2, 7, 4, 10, 7],
+      "circle-color": [
+        "match",
+        ["get","level"],
+        "green", "#38E27D",
+        "yellow", "#FFD84D",
+        "red", "#FF4D4D",
+        "#FFFFFF"
+      ],
+      "circle-opacity": 0.85,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "rgba(0,0,0,0.55)"
     }
+  });
 
-    html,body{ height:100%; margin:0; background:var(--bg); color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    #map{ position:fixed; inset:0; }
+  map.on("mouseenter","fires-layer",()=> map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave","fires-layer",()=> map.getCanvas().style.cursor="");
 
-    .hud{
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      width: 420px;
-      max-width: calc(100vw - 32px);
-      padding: 14px;
-      border-radius: 14px;
-      background: var(--panel);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 0 22px rgba(26,255,140,.15);
-      border: 1px solid var(--stroke);
-    }
+  map.on("click","fires-layer",(e)=>{
+    const f = e.features && e.features[0];
+    if(!f) return;
+    const p = f.properties;
 
-    .title{ font-weight: 800; font-size: 16px; letter-spacing:.2px; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
-    .muted{ color: var(--muted); }
-    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
-
-    .badges{ display:flex; gap:10px; margin-top:12px; }
-    .badge{
-      flex:1;
-      padding:10px 10px;
-      border-radius: 12px;
-      border: 1px solid var(--stroke);
-      background: rgba(0,0,0,.20);
-    }
-    .badge .n{ font-size: 18px; font-weight: 900; margin-top:4px; }
-
-    .actions{ display:flex; gap:10px; margin-top:12px; }
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(26,255,140,.35);
-      color: var(--neon);
-      background: rgba(0,0,0,.20);
-      cursor:pointer;
-      text-decoration:none;
-      user-select:none;
-      transition:.15s;
-      font-weight:700;
-    }
-    .btn:hover{
-      background: var(--neon);
-      color:#05080f;
-      box-shadow: 0 0 28px rgba(26,255,140,.25);
-    }
-
-    footer{
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      padding:16px 14px;
-      text-align:center;
-      font-size:.85em;
-      color: rgba(228,233,242,.70);
-      border-top:1px solid rgba(15,31,58,.55);
-      background: linear-gradient(transparent, rgba(0,0,0,.35));
-      pointer-events:none;
-    }
-
-    /* Modal */
-    .overlay{
-      display:none;
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.55);
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      z-index: 10;
-    }
-    .modal{
-      width:min(720px, 100%);
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 36px rgba(0,0,0,.6);
-      padding: 16px;
-    }
-    .modal h3{ margin:0 0 10px 0; }
-    .modal .closeRow{ display:flex; justify-content:space-between; gap:10px; align-items:center; }
-    .bullet{ margin:10px 0 0 0; padding-left: 18px; }
-  </style>
-</head>
-
-<body>
-  <div id="map"></div>
-
-  <div class="hud">
-    <div class="row">
-      <div class="title">Painel Bioecológico — Amazônia</div>
-      <div class="mono muted">status: <span id="stStatus">carregando…</span></div>
-    </div>
-
-    <div class="mono muted" style="margin-top:10px; line-height:1.45;">
-      <div><b>Fonte:</b> NASA FIRMS (detecção térmica/queimadas por satélite)</div>
-      <div><b>Última leitura:</b> <span id="stTime">—</span></div>
-      <div><b>Recorte:</b> Amazônia (bounding box)</div>
-    </div>
-
-    <div class="badges">
-      <div class="badge">
-        <div class="mono">🟢 baixo</div>
-        <div class="n" id="nGreen">0</div>
+    const html = `
+      <div style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;">
+        <div><b>Estado:</b> <span style="color:${levelColor(p.level)}">${p.level}</span></div>
+        <div><b>Confiança:</b> ${p.confidence ?? "-"}</div>
+        <div><b>Brilho:</b> ${p.brightness ?? "-"}</div>
+        <div style="opacity:.8;margin-top:6px;">Fonte: NASA FIRMS</div>
       </div>
-      <div class="badge">
-        <div class="mono">🟡 moderado</div>
-        <div class="n" id="nYellow">0</div>
-      </div>
-      <div class="badge">
-        <div class="mono">🔴 alto</div>
-        <div class="n" id="nRed">0</div>
-      </div>
-    </div>
-
-    <div class="actions">
-      <div class="btn" id="btnAtualizar">Atualizar</div>
-      <div class="btn" onclick="openModal('comofunciona')">Como funciona</div>
-      <div class="btn" onclick="openModal('sobre')">Sobre</div>
-    </div>
-
-    <div class="mono muted" style="margin-top:12px;">
-      Nota: este painel não exibe preço, investimento ou retorno.
-    </div>
-  </div>
-
-  <footer>
-    <p>
-      Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
-      Este projeto não constitui oferta de investimento. Trata-se de uma plataforma de monitoramento ambiental.
-    </p>
-  </footer>
-
-  <!-- Modal -->
-  <div class="overlay" id="modalOverlay" onclick="overlayClick(event)">
-    <div class="modal">
-      <div class="closeRow">
-        <h3 id="modalTitle">—</h3>
-        <div class="btn" onclick="closeModal()">Fechar</div>
-      </div>
-      <div id="modalBody" class="muted"></div>
-    </div>
-  </div>
-
-  <script>
-    // ====== CONFIG ======
-    // 1) Coloque seu token Mapbox aqui
-    mapboxgl.accessToken = "COLE_SEU_MAPBOX_TOKEN_AQUI";
-
-    // ====== MODAIS ======
-    const content = {
-      sobre: {
-        title: "🌿 Sobre",
-        body: `
-          <p>
-            O Token Amazônia é um projeto de transparência ambiental que utiliza
-            <strong>dados públicos</strong> para monitorar, em escala continental,
-            o estado ecológico da floresta amazônica.
-          </p>
-          <p class="muted">
-            Este painel é a prova visual do sistema em funcionamento.
-          </p>
-        `
-      },
-      comofunciona: {
-        title: "⚙️ Como funciona (MVP)",
-        body: `
-          <p>
-            Este painel apresenta <strong>pontos georreferenciados</strong> gerados por
-            detecções térmicas de satélite (NASA FIRMS).
-          </p>
-          <ul class="bullet">
-            <li><strong>🟢 Baixo</strong>: detecção com baixa confiança</li>
-            <li><strong>🟡 Moderado</strong>: confiança nominal</li>
-            <li><strong>🔴 Alto</strong>: alta confiança</li>
-          </ul>
-          <p class="muted">
-            Próxima etapa científica: combinar com vegetação (NDVI/Sentinel) e perda de cobertura (MapBiomas)
-            para um índice bioecológico composto.
-          </p>
-        `
-      }
-    };
-
-    function openModal(key){
-      const overlay = document.getElementById("modalOverlay");
-      const titleEl = document.getElementById("modalTitle");
-      const bodyEl = document.getElementById("modalBody");
-      const item = content[key];
-      if(!item) return;
-      titleEl.innerHTML = item.title;
-      bodyEl.innerHTML = item.body;
-      overlay.style.display = "flex";
-    }
-    function closeModal(){ document.getElementById("modalOverlay").style.display = "none"; }
-    function overlayClick(e){ if(e.target.id === "modalOverlay") closeModal(); }
-    document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
-
-    // ====== MAPA ======
-    const map = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/satellite-streets-v12",
-      center: [-62.5, -4.5],
-      zoom: 4.4,
-      minZoom: 3.5,
-      maxZoom: 10
-    });
-
-    map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
-
-    function levelColor(level){
-      if(level === "red") return "#FF4D4D";
-      if(level === "yellow") return "#FFD84D";
-      return "#38E27D";
-    }
-
-    async function carregarDados(){
-      // fires.json será atualizado automaticamente pelo GitHub Actions (passo 4)
-      const r = await fetch("fires.json?ts=" + Date.now(), { cache: "no-store" });
-      if(!r.ok) throw new Error("Não foi possível carregar fires.json");
-      const j = await r.json();
-
-      const points = (j.points || []).map(p => ({
-        ...p,
-        level: p.level || "green"
-      }));
-
-      // Stats
-      let g=0,y=0,rr=0;
-      for(const p of points){
-        if(p.level==="red") rr++;
-        else if(p.level==="yellow") y++;
-        else g++;
-      }
-      document.getElementById("nGreen").textContent = g;
-      document.getElementById("nYellow").textContent = y;
-      document.getElementById("nRed").textContent = rr;
-
-      document.getElementById("stTime").textContent = j.updated_at ? new Date(j.updated_at).toLocaleString("pt-BR") : "—";
-      document.getElementById("stStatus").textContent = "ativo";
-
-      // Atualiza layer
-      const geojson = {
-        type: "FeatureCollection",
-        features: points.map(p => ({
-          type: "Feature",
-          properties: p,
-          geometry: { type: "Point", coordinates: [p.lon, p.lat] }
-        }))
-      };
-
-      if(map.getSource("fires")){
-        map.getSource("fires").setData(geojson);
-        return;
-      }
-
-      map.addSource("fires", { type: "geojson", data: geojson });
-
-      map.addLayer({
-        id: "fires-layer",
-        type: "circle",
-        source: "fires",
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3.5, 2, 7, 4, 10, 7],
-          "circle-color": [
-            "match",
-            ["get","level"],
-            "green", "#38E27D",
-            "yellow", "#FFD84D",
-            "red", "#FF4D4D",
-            "#FFFFFF"
-          ],
-          "circle-opacity": 0.85,
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "rgba(0,0,0,0.55)"
-        }
-      });
-
-      map.on("mouseenter","fires-layer",()=> map.getCanvas().style.cursor="pointer");
-      map.on("mouseleave","fires-layer",()=> map.getCanvas().style.cursor="");
-
-      map.on("click","fires-layer",(e)=>{
-        const f = e.features && e.features[0];
-        if(!f) return;
-        const p = f.properties;
-
-        const html = `
-          <div style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;">
-            <div><b>Estado:</b> <span style="color:${levelColor(p.level)}">${p.level}</span></div>
-            <div><b>Confiança:</b> ${p.confidence ?? "-"}</div>
-            <div><b>Brilho:</b> ${p.brightness ?? "-"}</div>
-            <div style="opacity:.8;margin-top:6px;">Fonte: NASA FIRMS</div>
-          </div>
-        `;
-        new mapboxgl.Popup({ closeButton:true })
-          .setLngLat(e.lngLat)
-          .setHTML(html)
-          .addTo(map);
-      });
-    }
-
-    async function atualizarTudo(){
-      try{
-        document.getElementById("stStatus").textContent = "atualizando…";
-        await carregarDados();
-      }catch(err){
-        console.error(err);
-        document.getElementById("stStatus").textContent = "erro";
-        alert("Erro: " + err.message);
-      }
-    }
-
-    document.getElementById("btnAtualizar").addEventListener("click", atualizarTudo);
-
-    map.on("load", atualizarTudo);
-    setInterval(atualizarTudo, 10 * 60 * 1000);
-  </script>
-</body>
-</html>
+    `;
+    new mapboxgl.Popup({ closeButton:true })
+      .setLngLat(e.lngLat)
+      .setHTML(html)
+      .addTo(map);
+  });
+}
