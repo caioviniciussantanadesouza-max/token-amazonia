@@ -1,491 +1,189 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel Amazônia — Token Amazônia</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel Amazônia — Observatório</title>
 
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <!-- Mapbox GL -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
   <style>
     :root{
       --bg:#05080f;
-      --panel: rgba(6,10,18,.78);
-      --line: rgba(26,255,140,.25);
-      --neon:#1aff8c;
-      --text:#e4e9f2;
-      --muted:#9bb0d3;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: radial-gradient(1200px 600px at 50% 0%, rgba(26,255,140,.08), transparent 60%),
-                  var(--bg);
-      color: var(--text);
+      --panel: rgba(0,0,0,.28);
+      --stroke: rgba(15,31,58,.55);
+      --txt: rgba(228,233,242,.92);
+      --muted: rgba(228,233,242,.70);
+      --neon: #1AFF8C;
+      --red:#FF4D4D;
+      --yellow:#FFD84D;
+      --green:#38E27D;
     }
 
-    /* Top HUD */
-    .topHud{
-      position:sticky;
-      top:0;
-      z-index:999;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      padding:14px 16px;
-      background: rgba(0,0,0,.55);
-      border-bottom:1px solid rgba(26,255,140,.18);
-      backdrop-filter: blur(10px);
-    }
-    .brand{
-      display:flex; flex-direction:column;
-      line-height:1.1;
-    }
-    .brand .t1{ font-weight:900; letter-spacing:.2px; }
-    .brand .t2{ color: rgba(228,233,242,.75); font-size:.9em; margin-top:3px; }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    #map{ position:fixed; inset:0; }
 
-    .chips{
-      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    .hud{
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 420px;
+      max-width: calc(100vw - 32px);
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 22px rgba(26,255,140,.15);
+      border: 1px solid var(--stroke);
     }
-    .chip{
-      border:1px solid var(--line);
-      color: var(--text);
-      background: rgba(0,0,0,.25);
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:800;
-      cursor:pointer;
-      user-select:none;
-      transition:.2s;
-      white-space:nowrap;
-    }
-    .chip:hover{ border-color: rgba(26,255,140,.55); box-shadow:0 0 18px rgba(26,255,140,.12); }
 
-    .actions{
-      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    .title{ font-weight: 800; font-size: 16px; letter-spacing:.2px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+    .muted{ color: var(--muted); }
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+
+    .badges{ display:flex; gap:10px; margin-top:12px; }
+    .badge{
+      flex:1;
+      padding:10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.20);
     }
+    .badge .n{ font-size: 18px; font-weight: 900; margin-top:4px; }
+
+    .actions{ display:flex; gap:10px; margin-top:12px; }
     .btn{
-      border:1px solid var(--line);
-      color: var(--text);
-      background: rgba(0,0,0,.25);
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-      transition:.2s;
-      text-decoration:none;
       display:inline-flex;
       align-items:center;
-      gap:8px;
-    }
-    .btn:hover{ border-color: rgba(26,255,140,.55); box-shadow:0 0 18px rgba(26,255,140,.12); }
-
-    /* Layout */
-    .wrap{
-      display:grid;
-      grid-template-columns: 320px 1fr 320px;
-      gap:14px;
-      padding:14px;
-    }
-    .card{
-      background: var(--panel);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      backdrop-filter: blur(10px);
-      min-height: 120px;
-    }
-    .card h3{
-      margin:0 0 10px;
-      font-size:1em;
-      letter-spacing:.2px;
-    }
-    .muted{ color: var(--muted); }
-
-    /* MAP */
-    .mapCard{
-      padding:0;
-      overflow:hidden;
-      border-radius:18px;
-    }
-    #map{
-      width:100%;
-      height: 520px;
-      background:#000;
-    }
-    .mapHud{
-      position:absolute;
-      inset:auto auto 14px 14px;
-      z-index:500;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(26,255,140,.22);
-      border-radius:12px;
+      justify-content:center;
       padding:10px 12px;
-      max-width: 340px;
-      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      border: 1px solid rgba(26,255,140,.35);
+      color: var(--neon);
+      background: rgba(0,0,0,.20);
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+      transition:.15s;
+      font-weight:700;
     }
-    .mapHud .okdot{
-      display:inline-block;
-      width:9px; height:9px;
-      border-radius:99px;
+    .btn:hover{
       background: var(--neon);
-      margin-right:8px;
-      box-shadow:0 0 12px rgba(26,255,140,.35);
+      color:#05080f;
+      box-shadow: 0 0 28px rgba(26,255,140,.25);
     }
 
-    /* Legend */
-    .legend{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(26,255,140,.18);
-      background: rgba(0,0,0,.22);
-    }
-    .bar{
-      height:10px;
-      border-radius:999px;
-      background: linear-gradient(90deg,
-        rgba(255,65,65,.95),
-        rgba(255,200,0,.95),
-        rgba(26,255,140,.95)
-      );
-      border:1px solid rgba(255,255,255,.08);
-    }
-    .legendRow{
-      display:flex; justify-content:space-between;
-      font-size:.82em;
-      color: rgba(228,233,242,.75);
-      margin-top:6px;
-    }
-
-    .kv{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:8px 10px;
-      font-size:.92em;
-    }
-    .kv .k{ color: rgba(228,233,242,.75); }
-    .kv .v{ font-weight:900; }
-
-    .small{
+    footer{
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      padding:16px 14px;
+      text-align:center;
       font-size:.85em;
       color: rgba(228,233,242,.70);
-      line-height:1.5;
+      border-top:1px solid rgba(15,31,58,.55);
+      background: linear-gradient(transparent, rgba(0,0,0,.35));
+      pointer-events:none;
     }
 
     /* Modal */
-    .modalOverlay{
+    .overlay{
+      display:none;
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,.75);
-      display:none;
+      background: rgba(0,0,0,.55);
       align-items:center;
       justify-content:center;
-      z-index:2000;
-      padding:14px;
+      padding:16px;
+      z-index: 10;
     }
     .modal{
-      width:min(860px, 100%);
-      background: var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:18px;
+      width:min(720px, 100%);
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.55);
       backdrop-filter: blur(10px);
-      box-shadow:0 10px 40px rgba(0,0,0,.55);
+      box-shadow: 0 0 36px rgba(0,0,0,.6);
+      padding: 16px;
     }
-    .modalTop{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding-bottom:10px; border-bottom:1px solid rgba(26,255,140,.12);
-    }
-    .modalTitle{ font-weight:900; }
-    .close{
-      cursor:pointer;
-      font-weight:900;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 12px;
-    }
-    .close:hover{ border-color: rgba(26,255,140,.55); }
-    .modalBody{ padding-top:12px; line-height:1.65; color:#dfe7ff; }
-    ul.bullet{ padding-left:18px; }
-    ul.bullet li{ margin:8px 0; }
-
-    @media (max-width: 1100px){
-      .wrap{ grid-template-columns: 1fr; }
-      #map{ height: 520px; }
-    }
+    .modal h3{ margin:0 0 10px 0; }
+    .modal .closeRow{ display:flex; justify-content:space-between; gap:10px; align-items:center; }
+    .bullet{ margin:10px 0 0 0; padding-left: 18px; }
   </style>
 </head>
 
 <body>
-  <div class="topHud">
-    <div class="brand">
-      <div class="t1">PAINEL AMAZÔNIA — Monitoramento Bioecológico</div>
-      <div class="t2">Dados públicos • Atualização contínua • BioIndex (0–100)</div>
+  <div id="map"></div>
+
+  <div class="hud">
+    <div class="row">
+      <div class="title">Painel Bioecológico — Amazônia</div>
+      <div class="mono muted">status: <span id="stStatus">carregando…</span></div>
     </div>
 
-    <div class="chips">
-      <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
-      <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
-      <div class="chip" onclick="openModal('painel')">📊 Painel</div>
+    <div class="mono muted" style="margin-top:10px; line-height:1.45;">
+      <div><b>Fonte:</b> NASA FIRMS (detecção térmica/queimadas por satélite)</div>
+      <div><b>Última leitura:</b> <span id="stTime">—</span></div>
+      <div><b>Recorte:</b> Amazônia (bounding box)</div>
+    </div>
+
+    <div class="badges">
+      <div class="badge">
+        <div class="mono">🟢 baixo</div>
+        <div class="n" id="nGreen">0</div>
+      </div>
+      <div class="badge">
+        <div class="mono">🟡 moderado</div>
+        <div class="n" id="nYellow">0</div>
+      </div>
+      <div class="badge">
+        <div class="mono">🔴 alto</div>
+        <div class="n" id="nRed">0</div>
+      </div>
     </div>
 
     <div class="actions">
-      <a class="btn" href="index.html">← Voltar</a>
-      <button class="btn" id="btnAtualizar" type="button">↻ Atualizar</button>
+      <div class="btn" id="btnAtualizar">Atualizar</div>
+      <div class="btn" onclick="openModal('comofunciona')">Como funciona</div>
+      <div class="btn" onclick="openModal('sobre')">Sobre</div>
+    </div>
+
+    <div class="mono muted" style="margin-top:12px;">
+      Nota: este painel não exibe preço, investimento ou retorno.
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="card">
-      <h3>🌐 Camadas Públicas</h3>
-      <div class="small">
-        Base: Satélite (mundo real)<br>
-        Fonte: ESRI World Imagery (visual satélite)
-      </div>
-      <hr style="border:none;border-top:1px solid rgba(26,255,140,.12);margin:12px 0">
-      <div class="kv">
-        <div class="k">Status</div><div class="v" id="stStatus">carregando…</div>
-        <div class="k">Atualização</div><div class="v" id="stUpdate">—</div>
-      </div>
-      <div class="small" style="margin-top:10px">
-        Pontos: BioIndex calculado com <b>dados climáticos públicos</b> (umidade, nuvens, precipitação).<br>
-        Próximo passo: combinar com índice por satélite (NDVI/Sentinel/GEE).
-      </div>
-    </div>
+  <footer>
+    <p>
+      Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
+      Este projeto não constitui oferta de investimento. Trata-se de uma plataforma de monitoramento ambiental.
+    </p>
+  </footer>
 
-    <div class="card mapCard" style="position:relative">
-      <div id="map"></div>
-
-      <div class="mapHud">
-        <div style="font-weight:900;margin-bottom:6px;">
-          <span class="okdot"></span>Sistema ativo — Amazônia
-        </div>
-        <div class="small" id="mapInfo">
-          Carregando dados públicos… clique nos pontos.
-        </div>
-
-        <div class="legend">
-          <div style="font-weight:900; margin-bottom:6px;">Escala Bioecológica (0–100)</div>
-          <div class="bar"></div>
-          <div class="legendRow"><span>Perigo</span><span>Atenção</span><span>Bom</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>📡 Leituras em tempo real</h3>
-      <div class="kv">
-        <div class="k">Pontos carregados</div><div class="v" id="stCount">—</div>
-        <div class="k">Último ponto</div><div class="v" id="stLast">—</div>
-      </div>
-      <hr style="border:none;border-top:1px solid rgba(26,255,140,.12);margin:12px 0">
-      <div class="small">
-        Clique em um ponto no mapa para ver:
-        <b>Umidade</b>, <b>Nuvens</b>, <b>Precipitação</b> e o <b>BioIndex</b>.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🧪 Série temporal (MVP)</h3>
-      <div class="small">
-        Placeholder do gráfico temporal.<br>
-        Depois colocamos a série real (por satélite / API).
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🧩 Integridade / Cobertura</h3>
-      <div class="small">
-        Placeholder de camadas reais (desmatamento, fogo, rios, etc.).<br>
-        Depois conectamos fontes oficiais.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🔒 Transparência</h3>
-      <div class="small">
-        Token Amazônia — Transparência ambiental baseada em dados públicos.<br>
-        Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL -->
-  <div class="modalOverlay" id="modalOverlay" onclick="overlayClick(event)">
+  <!-- Modal -->
+  <div class="overlay" id="modalOverlay" onclick="overlayClick(event)">
     <div class="modal">
-      <div class="modalTop">
-        <div class="modalTitle" id="modalTitle"></div>
-        <div class="close" onclick="closeModal()">Fechar ✕</div>
+      <div class="closeRow">
+        <h3 id="modalTitle">—</h3>
+        <div class="btn" onclick="closeModal()">Fechar</div>
       </div>
-      <div class="modalBody" id="modalBody"></div>
+      <div id="modalBody" class="muted"></div>
     </div>
   </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // ====== MAPA ======
-    const map = L.map("map", { zoomControl: true }).setView([-6.0, -60.0], 4);
-
-    // Satélite sem rótulos
-    L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 18, attribution: "Esri" }
-    ).addTo(map);
-
-    const layerPontos = L.layerGroup().addTo(map);
-
-    // ====== CORES (verde bom, amarelo atenção, vermelho perigo) ======
-    function corPorValor(valor){
-      const v = Number(valor);
-      if (Number.isNaN(v)) return "rgba(180,190,210,.9)";
-
-      // perigo (0–39)
-      if (v < 40) return "rgba(255,65,65,.95)";
-      // atenção (40–69)
-      if (v < 70) return "rgba(255,200,0,.95)";
-      // bom (70–100)
-      return "rgba(26,255,140,.95)";
-    }
-
-    // ====== BIOINDEX (0–100) COM DADOS REAIS (Open-Meteo) ======
-    // Regras simples (MVP):
-    // - mais umidade e mais nuvens tendem a favorecer "atividade" (no conceito)
-    // - precipitação conta forte (até 5mm/h já pesa bastante)
-    function calcBioIndex(hum, cloud, precip){
-      const h = Math.max(0, Math.min(100, Number(hum)));
-      const c = Math.max(0, Math.min(100, Number(cloud)));
-      const p = Math.max(0, Number(precip));
-
-      // normaliza precip: 0mm => 0 | 5mm+ => 100
-      const pNorm = Math.max(0, Math.min(100, (p / 5) * 100));
-
-      // pesos (ajuste fino depois)
-      const bio = (0.45 * h) + (0.25 * c) + (0.30 * pNorm);
-      return Math.round(Math.max(0, Math.min(100, bio)));
-    }
-
-    async function getDadosReais(lat, lon){
-      // Open-Meteo (sem chave)
-      const url = "https://api.open-meteo.com/v1/forecast"
-        + "?latitude=" + encodeURIComponent(lat)
-        + "&longitude=" + encodeURIComponent(lon)
-        + "&current=relative_humidity_2m,precipitation,cloud_cover"
-        + "&timezone=auto";
-
-      const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error("Falha Open-Meteo: " + res.status);
-
-      const j = await res.json();
-      if(!j.current) throw new Error("Open-Meteo sem campo current");
-
-      return {
-        humidity: j.current.relative_humidity_2m,
-        precipitation: j.current.precipitation,
-        cloud: j.current.cloud_cover,
-        time: j.current.time
-      };
-    }
-
-    function limparPontos(){
-      layerPontos.clearLayers();
-    }
-
-    async function carregarDados(){
-      document.getElementById("stStatus").textContent = "carregando…";
-      document.getElementById("mapInfo").textContent = "Carregando dados públicos…";
-      document.getElementById("stLast").textContent = "—";
-      document.getElementById("stCount").textContent = "—";
-
-      limparPontos();
-
-      const res = await fetch("dados.json", { cache: "no-store" });
-      if(!res.ok) throw new Error("Não achei dados.json (erro " + res.status + ")");
-      const data = await res.json();
-
-      const pts = data.points || [];
-      document.getElementById("stCount").textContent = String(pts.length);
-
-      // carrega um por um (simples e confiável)
-      for(const p of pts){
-        const lat = p.lat, lon = p.lon, nome = p.nome || "Ponto";
-
-        let real;
-        try{
-          real = await getDadosReais(lat, lon);
-        }catch(e){
-          // Se der erro, marca como cinza e avisa no popup
-          const marker = L.circleMarker([lat, lon], {
-            radius: 7,
-            color: "rgba(180,190,210,.9)",
-            weight: 2,
-            fillColor: "rgba(180,190,210,.9)",
-            fillOpacity: 0.35
-          }).addTo(layerPontos);
-
-          marker.bindPopup(
-            `<strong>${nome}</strong><br>
-             Falha ao buscar dados reais.<br>
-             <span class="muted">${e.message}</span>`
-          );
-
-          continue;
-        }
-
-        const bio = calcBioIndex(real.humidity, real.cloud, real.precipitation);
-        const c = corPorValor(bio);
-
-        // Ponto
-        const marker = L.circleMarker([lat, lon], {
-          radius: 7,
-          color: c,
-          weight: 2,
-          fillColor: c,
-          fillOpacity: 0.40
-        }).addTo(layerPontos);
-
-        // Halo HUD
-        L.circleMarker([lat, lon], {
-          radius: 18,
-          color: c,
-          weight: 0,
-          fillColor: c,
-          fillOpacity: 0.12
-        }).addTo(layerPontos);
-
-        marker.on("click", () => {
-          document.getElementById("stLast").textContent = nome;
-        });
-
-        marker.bindPopup(
-          `<strong>${nome}</strong><br><br>
-           <b>BioIndex:</b> <span style="color:${c}">${bio}</span> / 100<br>
-           <b>Umidade:</b> ${real.humidity}%<br>
-           <b>Nuvens:</b> ${real.cloud}%<br>
-           <b>Precipitação:</b> ${real.precipitation} mm<br>
-           <span class="muted">Horário local: ${real.time}</span><br>
-           <span class="muted">lat: ${lat} | lon: ${lon}</span>`
-        );
-
-        document.getElementById("stUpdate").textContent = new Date().toLocaleString();
-      }
-
-      document.getElementById("stStatus").textContent = "online";
-      document.getElementById("mapInfo").textContent = "Dados públicos carregados. Clique nos pontos.";
-    }
+    // ====== CONFIG ======
+    // 1) Coloque seu token Mapbox aqui
+    mapboxgl.accessToken = "COLE_SEU_MAPBOX_TOKEN_AQUI";
 
     // ====== MODAIS ======
     const content = {
-      oquee: {
-        title: "🌿 O que é o Token Amazônia",
+      sobre: {
+        title: "🌿 Sobre",
         body: `
           <p>
             O Token Amazônia é um projeto de transparência ambiental que utiliza
@@ -498,28 +196,20 @@
         `
       },
       comofunciona: {
-        title: "⚙️ Como funciona",
+        title: "⚙️ Como funciona (MVP)",
         body: `
           <p>
-            Este painel integra camadas públicas (clima, satélite, índices) para formar um
-            <strong>BioIndex (0–100)</strong>.
+            Este painel apresenta <strong>pontos georreferenciados</strong> gerados por
+            detecções térmicas de satélite (NASA FIRMS).
           </p>
-          <p class="muted">
-            Hoje: BioIndex derivado de dados climáticos públicos em tempo real (umidade, nuvens e precipitação).
-            Próximo passo: substituir/combinar com índice por satélite (NDVI/Sentinel/GEE).
-          </p>
-        `
-      },
-      painel: {
-        title: "📊 Painel Amazônia — você encontra",
-        body: `
           <ul class="bullet">
-            <li><strong>Sistema ativo da Amazônia</strong></li>
-            <li><strong>Dados públicos</strong></li>
-            <li><strong>Atualização contínua</strong></li>
+            <li><strong>🟢 Baixo</strong>: detecção com baixa confiança</li>
+            <li><strong>🟡 Moderado</strong>: confiança nominal</li>
+            <li><strong>🔴 Alto</strong>: alta confiança</li>
           </ul>
           <p class="muted">
-            Mapa satélite real + pontos com leitura pública. Clique nos pontos para ver os dados usados no índice.
+            Próxima etapa científica: combinar com vegetação (NDVI/Sentinel) e perda de cobertura (MapBiomas)
+            para um índice bioecológico composto.
           </p>
         `
       }
@@ -539,22 +229,123 @@
     function overlayClick(e){ if(e.target.id === "modalOverlay") closeModal(); }
     document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
 
-    // ====== Atualização ======
+    // ====== MAPA ======
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      center: [-62.5, -4.5],
+      zoom: 4.4,
+      minZoom: 3.5,
+      maxZoom: 10
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+    function levelColor(level){
+      if(level === "red") return "#FF4D4D";
+      if(level === "yellow") return "#FFD84D";
+      return "#38E27D";
+    }
+
+    async function carregarDados(){
+      // fires.json será atualizado automaticamente pelo GitHub Actions (passo 4)
+      const r = await fetch("fires.json?ts=" + Date.now(), { cache: "no-store" });
+      if(!r.ok) throw new Error("Não foi possível carregar fires.json");
+      const j = await r.json();
+
+      const points = (j.points || []).map(p => ({
+        ...p,
+        level: p.level || "green"
+      }));
+
+      // Stats
+      let g=0,y=0,rr=0;
+      for(const p of points){
+        if(p.level==="red") rr++;
+        else if(p.level==="yellow") y++;
+        else g++;
+      }
+      document.getElementById("nGreen").textContent = g;
+      document.getElementById("nYellow").textContent = y;
+      document.getElementById("nRed").textContent = rr;
+
+      document.getElementById("stTime").textContent = j.updated_at ? new Date(j.updated_at).toLocaleString("pt-BR") : "—";
+      document.getElementById("stStatus").textContent = "ativo";
+
+      // Atualiza layer
+      const geojson = {
+        type: "FeatureCollection",
+        features: points.map(p => ({
+          type: "Feature",
+          properties: p,
+          geometry: { type: "Point", coordinates: [p.lon, p.lat] }
+        }))
+      };
+
+      if(map.getSource("fires")){
+        map.getSource("fires").setData(geojson);
+        return;
+      }
+
+      map.addSource("fires", { type: "geojson", data: geojson });
+
+      map.addLayer({
+        id: "fires-layer",
+        type: "circle",
+        source: "fires",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3.5, 2, 7, 4, 10, 7],
+          "circle-color": [
+            "match",
+            ["get","level"],
+            "green", "#38E27D",
+            "yellow", "#FFD84D",
+            "red", "#FF4D4D",
+            "#FFFFFF"
+          ],
+          "circle-opacity": 0.85,
+          "circle-stroke-width": 1,
+          "circle-stroke-color": "rgba(0,0,0,0.55)"
+        }
+      });
+
+      map.on("mouseenter","fires-layer",()=> map.getCanvas().style.cursor="pointer");
+      map.on("mouseleave","fires-layer",()=> map.getCanvas().style.cursor="");
+
+      map.on("click","fires-layer",(e)=>{
+        const f = e.features && e.features[0];
+        if(!f) return;
+        const p = f.properties;
+
+        const html = `
+          <div style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;">
+            <div><b>Estado:</b> <span style="color:${levelColor(p.level)}">${p.level}</span></div>
+            <div><b>Confiança:</b> ${p.confidence ?? "-"}</div>
+            <div><b>Brilho:</b> ${p.brightness ?? "-"}</div>
+            <div style="opacity:.8;margin-top:6px;">Fonte: NASA FIRMS</div>
+          </div>
+        `;
+        new mapboxgl.Popup({ closeButton:true })
+          .setLngLat(e.lngLat)
+          .setHTML(html)
+          .addTo(map);
+      });
+    }
+
     async function atualizarTudo(){
       try{
+        document.getElementById("stStatus").textContent = "atualizando…";
         await carregarDados();
       }catch(err){
-        alert("Erro: " + err.message);
+        console.error(err);
         document.getElementById("stStatus").textContent = "erro";
+        alert("Erro: " + err.message);
       }
     }
 
     document.getElementById("btnAtualizar").addEventListener("click", atualizarTudo);
 
-    // Inicializa
-    atualizarTudo();
-
-    // Auto (10 min)
+    map.on("load", atualizarTudo);
     setInterval(atualizarTudo, 10 * 60 * 1000);
   </script>
 </body>
