@@ -1,9 +1,0 @@
-{
-  "points": [
-    {"nome":"Ponto 01","lat":-3.10,"lon":-60.02},
-    {"nome":"Ponto 02","lat":-2.60,"lon":-55.00},
-    {"nome":"Ponto 03","lat":-4.20,"lon":-52.20},
-    {"nome":"Ponto 04","lat":-7.10,"lon":-63.90},
-    {"nome":"Ponto 05","lat":-9.80,"lon":-56.60}
-  ]
-}
