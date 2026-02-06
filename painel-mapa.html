@@ -1,98 +1,334 @@
-async function carregarDados(){
-  // Monta a URL correta (mesma pasta do painel, mesmo no GitHub Pages)
-  const basePath = location.href.substring(0, location.href.lastIndexOf("/") + 1);
-  const url = basePath + "fires.json?ts=" + Date.now();
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel Amazônia — Observatório</title>
 
-  // HUD
-  document.getElementById("stStatus").textContent = "carregando…";
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
-  const r = await fetch(url, { cache: "no-store" });
-  if(!r.ok){
-    const msg = `Falha ao carregar fires.json (${r.status}). URL: ${url}`;
-    document.getElementById("stStatus").textContent = "erro";
-    throw new Error(msg);
-  }
-
-  const j = await r.json();
-  const points = (j.points || []).map(p => ({
-    ...p,
-    level: p.level || "green"
-  }));
-
-  // Stats
-  let g=0,y=0,rr=0;
-  for(const p of points){
-    if(p.level==="red") rr++;
-    else if(p.level==="yellow") y++;
-    else g++;
-  }
-  document.getElementById("nGreen").textContent = g;
-  document.getElementById("nYellow").textContent = y;
-  document.getElementById("nRed").textContent = rr;
-
-  document.getElementById("stTime").textContent =
-    j.updated_at ? new Date(j.updated_at).toLocaleString("pt-BR") : "—";
-
-  document.getElementById("stStatus").textContent = "ativo";
-
-  // GeoJSON
-  const geojson = {
-    type: "FeatureCollection",
-    features: points.map(p => ({
-      type: "Feature",
-      properties: p,
-      geometry: { type: "Point", coordinates: [p.lon, p.lat] }
-    }))
-  };
-
-  // Atualiza se já existe
-  if(map.getSource("fires")){
-    map.getSource("fires").setData(geojson);
-    return;
-  }
-
-  // Cria source/layer (primeira vez)
-  map.addSource("fires", { type: "geojson", data: geojson });
-
-  map.addLayer({
-    id: "fires-layer",
-    type: "circle",
-    source: "fires",
-    paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 3.5, 2, 7, 4, 10, 7],
-      "circle-color": [
-        "match",
-        ["get","level"],
-        "green", "#38E27D",
-        "yellow", "#FFD84D",
-        "red", "#FF4D4D",
-        "#FFFFFF"
-      ],
-      "circle-opacity": 0.85,
-      "circle-stroke-width": 1,
-      "circle-stroke-color": "rgba(0,0,0,0.55)"
+  <style>
+    :root{
+      --bg:#05080f;
+      --panel: rgba(0,0,0,.28);
+      --stroke: rgba(15,31,58,.55);
+      --txt: rgba(228,233,242,.92);
+      --muted: rgba(228,233,242,.70);
+      --neon: #1AFF8C;
     }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    #map{ position:fixed; inset:0; }
+
+    .hud{
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 440px;
+      max-width: calc(100vw - 32px);
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 22px rgba(26,255,140,.15);
+      border: 1px solid var(--stroke);
+      z-index: 5;
+    }
+    .title{ font-weight: 900; font-size: 16px; letter-spacing:.2px; }
+    .mono{ font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .muted{ color: var(--muted); }
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .badges{ display:flex; gap:10px; margin-top:12px; }
+    .badge{
+      flex:1;
+      padding:10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.20);
+    }
+    .badge .n{ font-size: 18px; font-weight: 900; margin-top:4px; }
+    .actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(26,255,140,.35);
+      color: var(--neon);
+      background: rgba(0,0,0,.20);
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+      transition:.15s;
+      font-weight:800;
+    }
+    .btn:hover{
+      background: var(--neon);
+      color:#05080f;
+      box-shadow: 0 0 28px rgba(26,255,140,.25);
+    }
+
+    footer{
+      position:fixed;
+      bottom:0;left:0;right:0;
+      padding:16px 14px;
+      text-align:center;
+      font-size:.85em;
+      color: rgba(228,233,242,.70);
+      border-top:1px solid rgba(15,31,58,.55);
+      background: linear-gradient(transparent, rgba(0,0,0,.35));
+      z-index: 4;
+      pointer-events:none;
+    }
+  </style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<div class="hud">
+  <div class="row">
+    <div class="title">Observatório Bioecológico Amazônico</div>
+    <div class="mono muted">status: <span id="stStatus">carregando…</span></div>
+  </div>
+
+  <div class="mono muted" style="margin-top:10px; line-height:1.45;">
+    <div><b>Índice Ecológico (IEA):</b> <span id="iea">—</span> / 100</div>
+    <div><b>Camada biótica:</b> NDVI (NASA GIBS)</div>
+    <div><b>Distúrbio:</b> queimadas (NASA FIRMS)</div>
+    <div><b>Clima:</b> Open-Meteo (gerado por workflow)</div>
+    <div><b>Atualização:</b> <span id="stTime">—</span></div>
+  </div>
+
+  <div class="badges">
+    <div class="badge">
+      <div class="mono">🟢 baixo</div>
+      <div class="n" id="nGreen">0</div>
+    </div>
+    <div class="badge">
+      <div class="mono">🟡 moderado</div>
+      <div class="n" id="nYellow">0</div>
+    </div>
+    <div class="badge">
+      <div class="mono">🔴 alto</div>
+      <div class="n" id="nRed">0</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <div class="btn" id="btnAtualizar">Atualizar</div>
+    <div class="btn" id="btnNDVI">NDVI: ligar/desligar</div>
+  </div>
+
+  <div class="mono muted" style="margin-top:10px;">
+    Nota: este painel não exibe preço, investimento ou retorno.
+  </div>
+</div>
+
+<footer>
+  Observatório Bioecológico Amazônico — dados públicos. Monitoramento científico (não investimento).
+</footer>
+
+<script>
+  // ======= COLE AQUI SEU TOKEN MAPBOX (TEM QUE COMEÇAR COM pk.) =======
+  mapboxgl.accessToken = "pk.COLOQUE_SEU_TOKEN_AQUI";
+
+  // ======= MAPA =======
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/satellite-streets-v12",
+    center: [-62.5, -4.5],
+    zoom: 4.4,
+    minZoom: 3.5,
+    maxZoom: 10
+  });
+  map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+  function levelColor(level){
+    if(level === "red") return "#FF4D4D";
+    if(level === "yellow") return "#FFD84D";
+    return "#38E27D";
+  }
+
+  // ======= NDVI (BIÓTICO REAL) — NASA GIBS WMS (sem chave) =======
+  // OBS: usamos o endpoint "best"; sem TIME explicitamente, ele tende a usar o mais recente disponível.
+  const ndviWms = "https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi";
+  const ndviTiles = ndviWms +
+    "?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0" +
+    "&LAYERS=MODIS_Terra_NDVI_16Day" +
+    "&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE" +
+    "&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256";
+
+  let ndviVisible = false;
+
+  function addNdviLayer(){
+    if(map.getSource("ndvi")) return;
+    map.addSource("ndvi", { type:"raster", tiles:[ndviTiles], tileSize:256 });
+    map.addLayer({ id:"ndvi-layer", type:"raster", source:"ndvi", paint:{ "raster-opacity": 0.55 } });
+  }
+  function toggleNdvi(){
+    if(!map.getLayer("ndvi-layer")){
+      addNdviLayer();
+      ndviVisible = true;
+      return;
+    }
+    ndviVisible = !ndviVisible;
+    map.setLayoutProperty("ndvi-layer", "visibility", ndviVisible ? "visible" : "none");
+  }
+
+  document.getElementById("btnNDVI").addEventListener("click", () => {
+    try{ toggleNdvi(); }catch(e){ alert("NDVI indisponível no momento."); }
   });
 
-  map.on("mouseenter","fires-layer",()=> map.getCanvas().style.cursor="pointer");
-  map.on("mouseleave","fires-layer",()=> map.getCanvas().style.cursor="");
+  // ======= Carrega pontos FIRMS (fires.json) + índice (bioindex.json) =======
+  async function fetchJsonSameFolder(filename){
+    const base = location.href.substring(0, location.href.lastIndexOf("/") + 1);
+    const url = base + filename + "?ts=" + Date.now();
+    const r = await fetch(url, { cache:"no-store" });
+    if(!r.ok) throw new Error(`Falha ao carregar ${filename} (${r.status})`);
+    return await r.json();
+  }
 
-  map.on("click","fires-layer",(e)=>{
-    const f = e.features && e.features[0];
-    if(!f) return;
-    const p = f.properties;
+  async function carregarPontos(){
+    const j = await fetchJsonSameFolder("fires.json");
+    const points = (j.points || []).map(p => ({ ...p, level: p.level || "green" }));
 
-    const html = `
-      <div style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;">
-        <div><b>Estado:</b> <span style="color:${levelColor(p.level)}">${p.level}</span></div>
-        <div><b>Confiança:</b> ${p.confidence ?? "-"}</div>
-        <div><b>Brilho:</b> ${p.brightness ?? "-"}</div>
-        <div style="opacity:.8;margin-top:6px;">Fonte: NASA FIRMS</div>
-      </div>
-    `;
-    new mapboxgl.Popup({ closeButton:true })
-      .setLngLat(e.lngLat)
-      .setHTML(html)
-      .addTo(map);
+    let g=0,y=0,rr=0;
+    for(const p of points){
+      if(p.level==="red") rr++;
+      else if(p.level==="yellow") y++;
+      else g++;
+    }
+    document.getElementById("nGreen").textContent = g;
+    document.getElementById("nYellow").textContent = y;
+    document.getElementById("nRed").textContent = rr;
+
+    const geojson = {
+      type:"FeatureCollection",
+      features: points.map(p => ({
+        type:"Feature",
+        properties:p,
+        geometry:{ type:"Point", coordinates:[p.lon, p.lat] }
+      }))
+    };
+
+    if(map.getSource("fires")){
+      map.getSource("fires").setData(geojson);
+      return;
+    }
+
+    map.addSource("fires", { type:"geojson", data: geojson });
+    map.addLayer({
+      id:"fires-layer",
+      type:"circle",
+      source:"fires",
+      paint:{
+        "circle-radius":["interpolate",["linear"],["zoom"],3.5,2,7,4,10,7],
+        "circle-color":["match",["get","level"],
+          "green","#38E27D",
+          "yellow","#FFD84D",
+          "red","#FF4D4D",
+          "#FFFFFF"
+        ],
+        "circle-opacity":0.85,
+        "circle-stroke-width":1,
+        "circle-stroke-color":"rgba(0,0,0,0.55)"
+      }
+    });
+
+    map.on("mouseenter","fires-layer",()=> map.getCanvas().style.cursor="pointer");
+    map.on("mouseleave","fires-layer",()=> map.getCanvas().style.cursor="");
+
+    map.on("click","fires-layer",(e)=>{
+      const f = e.features && e.features[0];
+      if(!f) return;
+      const p = f.properties;
+      const html = `
+        <div style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;">
+          <div><b>Estado:</b> <span style="color:${levelColor(p.level)}">${p.level}</span></div>
+          <div><b>Confiança:</b> ${p.confidence ?? "-"}</div>
+          <div><b>Brilho:</b> ${p.brightness ?? "-"}</div>
+          <div style="opacity:.8;margin-top:6px;">Fonte: NASA FIRMS</div>
+        </div>
+      `;
+      new mapboxgl.Popup({ closeButton:true })
+        .setLngLat(e.lngLat)
+        .setHTML(html)
+        .addTo(map);
+    });
+  }
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  // Índice ecológico (simples, auditável, sem prometer nada)
+  function calcularIEA(bio, fires){
+    // biótico: NDVI (visual) — aqui usamos clima + distúrbio para o índice numérico MVP
+    // abiótico (0-100): clima favorável
+    const t = bio?.abiotic?.temp_c;
+    const p = bio?.abiotic?.precip_mm;
+    const h = bio?.abiotic?.humidity;
+
+    // pontuação clima (heurística defensável)
+    let clima = 50;
+    if(typeof t === "number"){
+      // faixa mais favorável ~24–30 (ajuste depois)
+      clima += (t >= 24 && t <= 30) ? 20 : (t < 20 || t > 34 ? -20 : 0);
+    }
+    if(typeof p === "number"){
+      clima += (p >= 5 ? 15 : -10);
+    }
+    if(typeof h === "number"){
+      clima += (h >= 60 ? 15 : -10);
+    }
+    clima = clamp(clima, 0, 100);
+
+    // distúrbio (0-100): menos fogo = melhor
+    const r = fires?.fires_red ?? 0;
+    const y = fires?.fires_yellow ?? 0;
+    const dist = clamp(100 - (r*1.2 + y*0.6), 0, 100);
+
+    // índice final (MVP): 55% clima + 45% ausência de distúrbio
+    return Math.round(0.55*clima + 0.45*dist);
+  }
+
+  async function carregarIndice(){
+    const bio = await fetchJsonSameFolder("bioindex.json");
+    // usar o próprio fires.json para contar distúrbio (evita inconsistência)
+    const f = await fetchJsonSameFolder("fires.json");
+    const pts = f.points || [];
+    let rr=0,yy=0,gg=0;
+    for(const p of pts){
+      if(p.level==="red") rr++;
+      else if(p.level==="yellow") yy++;
+      else gg++;
+    }
+    const iea = calcularIEA(bio, { fires_red: rr, fires_yellow: yy, fires_green: gg });
+
+    document.getElementById("iea").textContent = iea;
+    document.getElementById("stTime").textContent =
+      bio.updated_at ? new Date(bio.updated_at).toLocaleString("pt-BR") : "—";
+  }
+
+  async function atualizarTudo(){
+    try{
+      document.getElementById("stStatus").textContent = "atualizando…";
+      await carregarPontos();
+      await carregarIndice();
+      document.getElementById("stStatus").textContent = "ativo";
+    }catch(err){
+      console.error(err);
+      document.getElementById("stStatus").textContent = "erro";
+      alert("Erro: " + err.message);
+    }
+  }
+
+  document.getElementById("btnAtualizar").addEventListener("click", atualizarTudo);
+
+  map.on("load", () => {
+    atualizarTudo();
+    setInterval(atualizarTudo, 10 * 60 * 1000);
   });
-}
+</script>
+</body>
+</html>
