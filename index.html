@@ -1,75 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Observatório Bioecológico da Amazônia</title>
-
-<style>
-body{
-  margin:0;
-  font-family: Arial, Helvetica, sans-serif;
-  background:#05080f;
-  color:#e4e9f2;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  height:100vh;
-  text-align:center;
-}
-
-.container{
-  max-width:900px;
-  padding:40px;
-}
-
-h1{
-  font-size:2.2em;
-  margin-bottom:20px;
-}
-
-p{
-  font-size:1.1em;
-  line-height:1.6;
-  color:#cdd7ee;
-}
-
-.btn{
-  margin-top:40px;
-  display:inline-block;
-  padding:16px 36px;
-  border:1px solid #1aff8c;
-  color:#1aff8c;
-  text-decoration:none;
-  border-radius:6px;
-  font-weight:bold;
-  transition:0.25s;
-}
-
-.btn:hover{
-  background:#1aff8c;
-  color:#05080f;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>Observatório Bioecológico da Amazônia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root{ --bg:#05080f; --text:#e4e9f2; --neon:#1aff8c; }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:Arial,Helvetica,sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      text-align:center;
+      background:
+        linear-gradient(rgba(0,0,0,.78), rgba(0,0,0,.92)),
+        url("amazonia-tech.jpg") center/cover no-repeat;
+    }
+    .container{ max-width:900px; padding:40px 18px; }
+    h1{ font-size:2.2em; margin:0 0 16px; text-shadow:0 2px 18px rgba(0,0,0,.6); }
+    p{ font-size:1.1em; line-height:1.6; color:#cdd7ee; margin:10px 0; }
+    .btn{
+      margin-top:26px; display:inline-block; padding:16px 36px;
+      border:1px solid var(--neon); color:var(--neon);
+      text-decoration:none; border-radius:999px; font-weight:900;
+      transition:.25s; background:rgba(0,0,0,.25);
+      backdrop-filter: blur(6px);
+    }
+    .btn:hover{ background:var(--neon); color:#05080f; box-shadow:0 0 28px rgba(26,255,140,.25); }
+    .foot{ margin-top:26px; font-size:.9em; color:rgba(228,233,242,.70); line-height:1.45; }
+  </style>
 </head>
-
 <body>
-
-<div class="container">
-  <h1>Observatório Bioecológico da Amazônia</h1>
-
-  <p>
-    Um painel público que transforma dados ambientais reais
-    em uma leitura visual do estado ecológico da floresta.
-  </p>
-
-  <p>
-    Não mede preço.  
-    Mede condição ecológica.
-  </p>
-
-  <a class="btn" href="painel.html">Acessar Painel</a>
-</div>
-
+  <div class="container">
+    <h1>Observatório Bioecológico da Amazônia</h1>
+    <p>Um painel público que transforma <b>dados ambientais reais</b> em uma leitura visual do estado ecológico da floresta.</p>
+    <p>Não mede preço. <b>Mede condição ecológica.</b></p>
+    <a class="btn" href="painel.html">Acessar Painel</a>
+    <div class="foot">
+      Transparência ambiental baseada em dados públicos. <br>
+      Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.
+    </div>
+  </div>
 </body>
 </html>
