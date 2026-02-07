@@ -2,402 +2,407 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PAINEL AMAZÔNIA — Observatório Bioecológico</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Painel Amazônia — Observatório Bioecológico</title>
 
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <!-- Turf (point in polygon + bbox) -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
   <style>
     :root{
       --bg:#05080f;
-      --panel: rgba(6,10,18,.78);
-      --panel2: rgba(6,10,18,.66);
-      --line2: rgba(26,255,140,.16);
+      --panel: rgba(6,10,18,.82);
+      --line: rgba(26,255,140,.25);
       --neon:#1aff8c;
       --text:#e4e9f2;
       --muted:#9bb0d3;
-      --warn:#ffd24a;
-      --bad:#ff4d4d;
-      --ok:#1aff8c;
+      --red:#ff3b3b;
+      --yellow:#ffd24d;
+      --green:#1aff8c;
+      --blue:#33b6ff;
     }
+
     *{ box-sizing:border-box; }
-    html,body{ height:100%; }
     body{
       margin:0;
+      background:var(--bg);
+      color:var(--text);
       font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
       overflow:hidden;
     }
 
     .topbar{
-      height:64px;
+      position:fixed;
+      top:10px;
+      left:10px;
+      right:10px;
+      z-index:9999;
       display:flex;
       align-items:center;
+      justify-content:space-between;
       gap:12px;
-      padding:10px 14px;
-      border-bottom:1px solid rgba(15,31,58,.6);
-      background: linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.25));
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;
+      backdrop-filter: blur(10px);
     }
     .brand{
+      font-weight:900;
+      letter-spacing:.3px;
       display:flex;
       align-items:center;
       gap:10px;
-      padding:8px 12px;
-      border:1px solid var(--line2);
-      border-radius:14px;
-      background: var(--panel2);
-      backdrop-filter: blur(8px);
-      font-weight:900;
-      white-space:nowrap;
+      flex-wrap:wrap;
     }
-    .brand small{
-      font-weight:700;
-      color: rgba(228,233,242,.72);
-      margin-left:10px;
-    }
+    .brand small{ color:rgba(228,233,242,.75); font-weight:700; }
+
     .chips{
       display:flex;
       gap:10px;
-      margin-left:auto;
-      margin-right:auto;
-      padding:8px 10px;
-      border:1px solid var(--line2);
-      border-radius:16px;
-      background: var(--panel2);
-      backdrop-filter: blur(8px);
+      flex-wrap:wrap;
+      justify-content:center;
     }
     .chip{
       display:flex;
       align-items:center;
       gap:8px;
       padding:10px 14px;
-      border:1px solid var(--line2);
+      border:1px solid var(--line);
       border-radius:999px;
       cursor:pointer;
       user-select:none;
-      transition:.18s;
+      transition:.2s;
       background: rgba(0,0,0,.25);
       font-weight:900;
       white-space:nowrap;
     }
-    .chip:hover{ border-color: rgba(26,255,140,.55); box-shadow:0 0 18px rgba(26,255,140,.14); }
+    .chip:hover{
+      border-color: rgba(26,255,140,.55);
+      box-shadow:0 0 18px rgba(26,255,140,.12);
+    }
 
-    .actions{ display:flex; align-items:center; gap:10px; margin-left:auto; }
-    .btn{
-      display:inline-flex;
+    .actions{
+      display:flex;
+      gap:10px;
       align-items:center;
-      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
       padding:10px 14px;
-      border:1px solid var(--line2);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
       border-radius:999px;
-      background: rgba(0,0,0,.25);
-      color: var(--text);
       cursor:pointer;
       font-weight:900;
-      transition:.18s;
-      text-decoration:none;
     }
-    .btn:hover{ border-color: rgba(26,255,140,.55); }
-    .btnPrimary{ border-color: rgba(26,255,140,.55); color: var(--neon); }
-    .btnPrimary:hover{ background: rgba(26,255,140,.10); box-shadow:0 0 18px rgba(26,255,140,.12); }
+    .btn.primary{
+      border-color: rgba(26,255,140,.55);
+      color:var(--neon);
+    }
+    .btn:hover{
+      box-shadow:0 0 18px rgba(26,255,140,.12);
+      border-color: rgba(26,255,140,.55);
+    }
 
-    .wrap{
-      height: calc(100% - 64px);
+    .grid{
+      position:fixed;
+      inset:70px 10px 10px 10px;
       display:grid;
-      grid-template-columns: 290px 1fr 330px;
-      grid-template-rows: 1fr 150px;
-      gap:12px;
-      padding:12px;
+      grid-template-columns: 330px 1fr 330px;
+      grid-template-rows: 1fr 180px;
+      gap:10px;
+      z-index:1;
     }
 
     .panel{
-      border:1px solid var(--line2);
+      border:1px solid var(--line);
+      background:var(--panel);
       border-radius:16px;
-      background: var(--panel);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
+      padding:12px;
       overflow:hidden;
     }
-    .panelHeader{
-      padding:12px 12px 10px;
-      border-bottom:1px solid rgba(26,255,140,.10);
-      font-weight:900;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .panelHeader small{ font-weight:700; color: rgba(228,233,242,.72); }
-    .panelBody{
-      padding:12px;
-      color: rgba(228,233,242,.92);
-      font-size:.95em;
-      line-height:1.4;
-    }
-    .muted{ color: var(--muted); }
-    .kv{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      padding:6px 0;
-      border-bottom:1px dashed rgba(26,255,140,.10);
-      font-size:.92em;
-    }
-    .kv:last-child{ border-bottom:none; }
 
-    #map{ width:100%; height:100%; border-radius:16px; }
-    .mapWrap{ position:relative; overflow:hidden; }
+    .left{ grid-column:1; grid-row:1; }
+    .mapWrap{ grid-column:2; grid-row:1; position:relative; }
+    .right{ grid-column:3; grid-row:1; }
 
-    .mapHud{
+    .bottomL{ grid-column:1; grid-row:2; }
+    .bottomM{ grid-column:2; grid-row:2; }
+    .bottomR{ grid-column:3; grid-row:2; }
+
+    #map{
       position:absolute;
-      left:14px;
-      top:14px;
-      z-index:500;
-      max-width: 420px;
-      border:1px solid var(--line2);
-      border-radius:14px;
-      background: rgba(6,10,18,.68);
-      backdrop-filter: blur(10px);
-      padding:10px 12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.45);
-      font-size:.92em;
-      line-height:1.35;
+      inset:0;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(26,255,140,.20);
     }
-    .legendBar{
+
+    .muted{ color:var(--muted); }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .tag{
+      font-size:.85em;
+      padding:4px 8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:rgba(228,233,242,.85);
+      background: rgba(0,0,0,.25);
+    }
+    .hr{ height:1px; background:rgba(26,255,140,.12); margin:10px 0; }
+
+    .legendDot{
+      width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:8px;
+      box-shadow: 0 0 12px rgba(255,255,255,.12);
+    }
+
+    .slider{
+      width:100%;
+      accent-color: var(--neon);
+    }
+
+    /* HUD boxes on map */
+    .hudBox{
       position:absolute;
-      left:14px;
-      bottom:14px;
-      z-index:500;
-      width: 280px;
-      border:1px solid var(--line2);
-      border-radius:14px;
-      background: rgba(6,10,18,.68);
+      z-index:800;
+      border:1px solid rgba(26,255,140,.22);
+      background: rgba(6,10,18,.72);
+      border-radius:12px;
+      padding:10px;
       backdrop-filter: blur(10px);
-      padding:10px 12px;
-      font-size:.9em;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      color:rgba(228,233,242,.92);
+      max-width: 360px;
     }
-    .bar{
+    .hudTop{
+      top:10px;
+      left:10px;
+    }
+    .hudScale{
+      left:10px;
+      bottom:10px;
+      min-width: 280px;
+    }
+    .scaleBar{
       height:10px;
       border-radius:999px;
-      background: linear-gradient(90deg, var(--bad), var(--warn), var(--ok));
-      margin:8px 0 6px;
-      opacity:.95;
+      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+      border:1px solid rgba(255,255,255,.08);
+      margin-top:8px;
+      position:relative;
+      overflow:hidden;
     }
-    .barMeta{
+    .scaleLabels{
       display:flex;
       justify-content:space-between;
-      color: rgba(228,233,242,.72);
-      font-size:.85em;
-    }
-    .indexBig{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-    .indexBig .n{ font-size:1.25em; font-weight:900; }
-
-    .bottomGrid{
-      grid-column: 1 / 4;
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:12px;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border:1px solid rgba(26,255,140,.18);
-      border-radius:999px;
-      background: rgba(0,0,0,.18);
-      font-weight:900;
-      font-size:.85em;
-      white-space:nowrap;
-    }
-    .dot{ width:10px;height:10px;border-radius:999px; display:inline-block; }
-
-    .controlRow{
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(26,255,140,.10);
-    }
-    input[type="range"]{ width:100%; }
-
-    .leaflet-control-attribution{
-      background: rgba(0,0,0,.35) !important;
-      color: rgba(228,233,242,.75) !important;
-      border-radius:10px;
-      padding:3px 8px !important;
-      border:1px solid rgba(26,255,140,.12);
+      font-size:.78em;
+      color:rgba(228,233,242,.70);
+      margin-top:6px;
     }
 
     /* Modal */
     .modalOverlay{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,.76);
+      background: rgba(0,0,0,.70);
       display:none;
       align-items:center;
       justify-content:center;
-      z-index:9999;
+      z-index:10000;
     }
     .modal{
-      width:min(860px, calc(100vw - 28px));
-      background: rgba(6,10,18,.88);
-      border:1px solid rgba(26,255,140,.22);
+      width:min(820px, calc(100vw - 28px));
+      background: rgba(6,10,18,.90);
+      border:1px solid var(--line);
       border-radius:18px;
-      padding:16px;
-      backdrop-filter: blur(10px);
+      padding:18px;
+      backdrop-filter: blur(12px);
       box-shadow:0 10px 40px rgba(0,0,0,.55);
     }
-    .modalTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .modalTitle{ font-weight:900; font-size:1.1em; }
     .close{
+      float:right;
       cursor:pointer;
       font-weight:900;
-      border:1px solid rgba(26,255,140,.22);
+      border:1px solid var(--line);
       border-radius:999px;
       padding:6px 10px;
     }
     .close:hover{ border-color: rgba(26,255,140,.55); }
-    .modalBody{ color:#dfe7ff; line-height:1.6; font-size:.98em; }
-    ul.bullet{ padding-left:18px; margin:8px 0; }
+    .modalTitle{ font-weight:900; font-size:1.1em; }
+    .modalBody{ margin-top:10px; line-height:1.6; color:#dfe7ff; }
+    ul.bullet{ padding-left:18px; }
     ul.bullet li{ margin:8px 0; }
 
+    /* Mobile */
     @media (max-width: 1100px){
       body{ overflow:auto; }
-      .wrap{ height:auto; grid-template-columns: 1fr; grid-template-rows: auto; }
-      .bottomGrid{ grid-template-columns: 1fr; }
+      .grid{
+        position:relative;
+        inset:auto;
+        margin-top:80px;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        height:auto;
+      }
+      .left,.mapWrap,.right,.bottomL,.bottomM,.bottomR{ grid-column:1; }
+      .mapWrap{ height: 65vh; }
+      #map{ position:relative; height:65vh; }
     }
   </style>
 </head>
 
 <body>
+
   <div class="topbar">
     <div class="brand">
       PAINEL AMAZÔNIA — Observatório Bioecológico
       <small>Dados públicos • Atualização contínua • Escala 0–100</small>
+      <span class="tag" id="statusOnline">online</span>
     </div>
 
     <div class="chips">
       <div class="chip" onclick="openModal('oquee')">🌿 O que é</div>
       <div class="chip" onclick="openModal('comofunciona')">⚙️ Como funciona</div>
       <div class="chip" onclick="openModal('painel')">📊 Painel</div>
-      <div class="chip" onclick="toggleNDVI()">🌱 NDVI</div>
+      <div class="chip" id="toggleNDVI" title="Liga/desliga NDVI">🌱 NDVI</div>
     </div>
 
     <div class="actions">
-      <a class="btn" href="index.html">← Voltar</a>
-      <button class="btn btnPrimary" onclick="atualizarTudo()">⟳ Atualizar</button>
+      <button class="btn" onclick="window.location.href='index.html'">← Voltar</button>
+      <button class="btn primary" onclick="atualizarTudo()">⟳ Atualizar</button>
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="panel">
-      <div class="panelHeader">
-        <div>🧩 Camadas Públicas</div>
-        <small><span id="statusOnline">online</span></small>
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="panel left">
+      <div class="row">
+        <div style="font-weight:900;">🧭 Camadas Públicas</div>
+        <div class="tag" id="tagConn">online</div>
       </div>
-      <div class="panelBody">
-        <div class="kv"><span>Base</span><span class="muted">Satélite (NASA GIBS / VIIRS)</span></div>
-        <div class="kv"><span>Vegetação</span><span class="muted">NDVI (NASA GIBS) <b id="ndviState">off</b></span></div>
-        <div class="kv"><span>Distúrbio</span><span class="muted">Incêndios (NASA EONET)</span></div>
+      <div class="hr"></div>
 
-        <div class="controlRow">
-          <div class="badge">Regra:</div>
-          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-            <div class="badge"><span class="dot" style="background:var(--ok)"></span>🟢 sem distúrbio</div>
-            <div class="badge"><span class="dot" style="background:var(--warn)"></span>🟡 alerta</div>
-            <div class="badge"><span class="dot" style="background:var(--bad)"></span>🔴 distúrbio (evento real)</div>
-          </div>
-        </div>
+      <div style="font-weight:900; margin-bottom:6px;">Base</div>
+      <div class="muted">Satélite (NASA GIBS / VIIRS)</div>
 
-        <div class="controlRow">
-          <div class="kv"><span>Atualização</span><span class="muted" id="lastUpdate">—</span></div>
-          <div class="kv"><span>Eventos (Amazônia)</span><span class="muted" id="countEvents">—</span></div>
-          <div class="kv"><span>Pixels desenhados</span><span class="muted" id="countPixels">—</span></div>
-        </div>
+      <div style="font-weight:900; margin-top:12px; margin-bottom:6px;">Distúrbio real</div>
+      <div class="muted">Incêndios (NASA EONET)</div>
 
-        <div class="controlRow">
-          <div class="badge">Densidade (pixel)</div>
-          <small class="muted">Recomendado 5–7.</small>
-          <input id="density" type="range" min="4" max="10" step="1" value="6" />
-          <div class="kv"><span>step</span><span class="muted"><b id="densityVal">6</b></span></div>
-        </div>
+      <div class="hr"></div>
 
-        <div class="controlRow">
-          <div class="badge">Índice Ecológico Amazônico (0–100) — MVP</div>
-          <div class="kv"><span>Valor</span><span class="muted"><b id="bioIndex">—</b></span></div>
-          <small class="muted">MVP: proporção de pixels 🔴/🟡 baseada em distância a distúrbios reais EONET.</small>
-        </div>
+      <div style="font-weight:900; margin-bottom:6px;">Regra</div>
+      <div class="muted" style="line-height:1.9;">
+        <span class="legendDot" style="background:var(--green)"></span> sem distúrbio<br/>
+        <span class="legendDot" style="background:var(--yellow)"></span> alerta<br/>
+        <span class="legendDot" style="background:var(--red)"></span> distúrbio (evento real)
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="muted" style="font-size:.92em; line-height:1.6;">
+        <div><b>Atualização:</b> <span id="tsUpdate">—</span></div>
+        <div><b>Eventos (Amazônia):</b> <span id="countEvents">—</span></div>
+        <div><b>Pontos desenhados:</b> <span id="countPixels">—</span></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="font-weight:900; margin-bottom:8px;">Densidade (pixel)</div>
+      <input class="slider" id="density" type="range" min="6" max="24" value="12" />
+      <div class="muted" style="font-size:.86em; margin-top:6px;">
+        Menor = mais detalhado (pesa mais). Recomendado: 10–16.
       </div>
     </div>
 
+    <!-- MAP -->
     <div class="panel mapWrap">
       <div id="map"></div>
 
-      <div class="mapHud">
-        <b>Sistema ativo — Amazônia</b><br/>
-        <span class="muted">Pixels holográficos dentro do bioma (geojson) + distúrbio real (EONET).</span><br/>
-        <span class="muted">Clique em um pixel para ver classificação e distância do distúrbio.</span>
+      <!-- HUD -->
+      <div class="hudBox hudTop">
+        <div style="font-weight:900;">✅ Sistema ativo — Amazônia</div>
+        <div class="muted" style="margin-top:4px; font-size:.92em;">
+          Camada holográfica recortada no bioma + distúrbios reais (EONET). Clique em um ponto.
+        </div>
       </div>
 
-      <div class="legendBar">
-        <div class="indexBig">
-          <div><b>Escala Ecológica (0–100)</b></div>
-          <div class="n"><span id="bioIndex2">—</span></div>
+      <div class="hudBox hudScale">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <div style="font-weight:900;">Escala Ecológica (0–100)</div>
+          <div class="tag">MVP</div>
         </div>
-        <div class="bar"></div>
-        <div class="barMeta">
+        <div class="scaleBar"></div>
+        <div class="scaleLabels">
           <span>impacto</span><span>alerta</span><span>baixo distúrbio</span>
         </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panelHeader">
-        <div>📡 Leituras em tempo real</div>
-        <small><span id="rightCount">—</span> pixels</small>
+    <!-- RIGHT -->
+    <div class="panel right">
+      <div class="row">
+        <div style="font-weight:900;">📡 Leituras em tempo real</div>
+        <div class="tag"><span id="liveCount">—</span> pontos</div>
       </div>
-      <div class="panelBody">
-        <div class="muted">Clique em um pixel para ver classificação e distância do distúrbio real.</div>
-        <div style="margin-top:12px; border-top:1px dashed rgba(26,255,140,.12); padding-top:12px;">
-          <div class="badge">Último pixel selecionado</div>
-          <div style="margin-top:10px;" id="selectedInfo" class="muted">—</div>
-        </div>
+      <div class="hr"></div>
+
+      <div class="muted" style="font-size:.92em; line-height:1.6;">
+        Clique em um ponto para ver a classificação e a distância do distúrbio real.
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="font-weight:900; margin-bottom:8px;">Último ponto selecionado</div>
+      <div class="muted" id="lastPick">—</div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="panel bottomL">
+      <div class="row">
+        <div style="font-weight:900;">📈 Série temporal (MVP)</div>
+        <div class="tag">placeholder</div>
+      </div>
+      <div class="hr"></div>
+      <div class="muted">
+        Próximo passo: gráfico real do índice por dia/semana (NDVI + fogo + anomalias + clima + desmatamento).
       </div>
     </div>
 
-    <div class="bottomGrid">
-      <div class="panel">
-        <div class="panelHeader"><div>📈 Série temporal (MVP)</div><small class="muted">placeholder</small></div>
-        <div class="panelBody muted">Próximo passo: gráfico real do índice por dia/semana (NDVI + fogo + anomalias + clima).</div>
+    <div class="panel bottomM">
+      <div class="row">
+        <div style="font-weight:900;">🧬 Integridade / Cobertura</div>
+        <div class="tag">placeholder</div>
       </div>
-
-      <div class="panel">
-        <div class="panelHeader"><div>🧬 Integridade / Cobertura</div><small class="muted">placeholder</small></div>
-        <div class="panelBody muted">Próximo passo: métricas reais por satélite (NDVI/biomassa) e mudanças de cobertura.</div>
+      <div class="hr"></div>
+      <div class="muted">
+        Próximo passo: métricas reais por satélite (NDVI/biomassa) + mudanças de cobertura (desmatamento/alertas).
       </div>
+    </div>
 
-      <div class="panel">
-        <div class="panelHeader"><div>🔒 Transparência</div><small class="muted">jurídico</small></div>
-        <div class="panelBody">
-          <b>Observatório Amazônia</b> — Transparência ambiental baseada em dados públicos.<br/>
-          <span class="muted">Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.</span>
-        </div>
+    <div class="panel bottomR">
+      <div class="row">
+        <div style="font-weight:900;">🔒 Transparência</div>
+        <div class="tag">jurídico</div>
+      </div>
+      <div class="hr"></div>
+      <div class="muted">
+        Observatório Amazônia — Transparência ambiental baseada em dados públicos.<br/>
+        Este projeto não constitui oferta de investimento. Plataforma de monitoramento ambiental.
       </div>
     </div>
   </div>
 
+  <!-- MODAL -->
   <div class="modalOverlay" id="modalOverlay" onclick="overlayClick(event)">
     <div class="modal">
-      <div class="modalTop">
-        <div class="modalTitle" id="modalTitle"></div>
-        <div class="close" onclick="closeModal()">Fechar ✕</div>
-      </div>
+      <div class="close" onclick="closeModal()">Fechar ✕</div>
+      <div class="modalTitle" id="modalTitle"></div>
       <div class="modalBody" id="modalBody"></div>
     </div>
   </div>
@@ -405,273 +410,320 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // ======= SEM ACENTO =======
-    // Use apenas este nome no repo: amazon ia.geojson -> "amazonia.geojson"
-    const GEOJSON_PRIMARY = "amazonia.geojson";
+    // ===============================
+    // CONFIG
+    // ===============================
+    const GEOJSON_URL = "amz.geojson"; // sem acento, sem espaço
+    const EONET_WILDFIRES = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&category=wildfires&days=30";
 
-    // fallback (se existir por acidente)
-    const GEOJSON_FALLBACKS = [
-      "amaz%C3%B4nia.geojson",
-      "amaz%C3%B4nia.geoJSON",
-      "amazonia.geoJSON"
-    ];
+    // Regras (MVP) por DISTÂNCIA ao distúrbio real (km)
+    // 🔴 <= 75 km | 🟡 <= 180 km | 🟢 > 180 km
+    const TH_RED_KM = 75;
+    const TH_YELLOW_KM = 180;
 
-    const EONET_WILDFIRES =
-      "https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires&status=open,closed&limit=400";
-
-    const DIST_RED_KM = 35;
-    const DIST_YEL_KM = 90;
-
-    const map = L.map("map", { zoomControl:true, preferCanvas:true, worldCopyJump:true })
-      .setView([-6.5, -60.0], 4);
-
-    const viirs = L.tileLayer(
-      "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
-      { time: new Date().toISOString().slice(0,10), maxZoom:9, attribution:"NASA GIBS (VIIRS)" }
-    ).addTo(map);
-
-    const ndviLayer = L.tileLayer(
-      "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_16Day/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png",
-      { time: new Date().toISOString().slice(0,10), maxZoom:9, opacity:0.55, attribution:"NASA GIBS (MODIS NDVI)" }
+    // ===============================
+    // MAP LAYERS (GIBS)
+    // ===============================
+    // Base satélite (VIIRS Corrected Reflectance True Color)
+    // (esse endpoint é público; Leaflet usa x/y/z)
+    const GIBS_BASE = L.tileLayer(
+      "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/2019-01-01/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+      { maxZoom: 9, attribution: "Leaflet | NASA GIBS (VIIRS)" }
     );
 
+    // NDVI (MODIS Terra 16-day NDVI) - camada opcional
+    const GIBS_NDVI = L.tileLayer(
+      "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_16Day/default/2019-01-01/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png",
+      { maxZoom: 9, opacity: 0.55, attribution: "NASA GIBS (NDVI)" }
+    );
+
+    // ===============================
+    // MAP INIT (centraliza Amazônia)
+    // ===============================
+    const map = L.map("map", {
+      zoomControl: true,
+      preferCanvas: true
+    });
+
+    GIBS_BASE.addTo(map);
+
+    // Ajuste inicial (Amazônia aproximada)
+    map.setView([-5.5, -62], 4);
+
+    // ===============================
+    // STATE
+    // ===============================
     let ndviOn = false;
-    function toggleNDVI(){
+    let amazoniaFeature = null;
+    let eonetEvents = []; // {lat, lon, dateISO, title}
+    let pixelLayer = L.layerGroup().addTo(map);
+    let eventLayer = L.layerGroup().addTo(map);
+
+    // ===============================
+    // UI
+    // ===============================
+    const $ = (id)=>document.getElementById(id);
+
+    $("toggleNDVI").addEventListener("click", ()=>{
       ndviOn = !ndviOn;
-      document.getElementById("ndviState").textContent = ndviOn ? "on" : "off";
-      if(ndviOn) ndviLayer.addTo(map);
-      else map.removeLayer(ndviLayer);
-    }
-
-    const canvasRenderer = L.canvas({ padding:0.5 });
-    const layerPixels = L.layerGroup().addTo(map);
-    const layerDisturb = L.layerGroup().addTo(map);
-    const layerBiome = L.geoJSON(null, { style:{ color:"rgba(26,255,140,.55)", weight:2, fillOpacity:0 } }).addTo(map);
-
-    function nowBR(){ return new Date().toLocaleString("pt-BR"); }
-
-    function haversineKm(lat1, lon1, lat2, lon2){
-      const R=6371, toRad=x=>x*Math.PI/180;
-      const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-      const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-      return 2*R*Math.asin(Math.sqrt(a));
-    }
-
-    function corPorDistKm(d){
-      if(d <= DIST_RED_KM) return { c:"rgba(255,77,77,.95)", label:"distúrbio" };
-      if(d <= DIST_YEL_KM) return { c:"rgba(255,210,74,.95)", label:"alerta" };
-      return { c:"rgba(26,255,140,.95)", label:"sem distúrbio" };
-    }
-
-    function pointInRing(pt, ring){
-      const x=pt[0], y=pt[1];
-      let inside=false;
-      for(let i=0, j=ring.length-1; i<ring.length; j=i++){
-        const xi=ring[i][0], yi=ring[i][1];
-        const xj=ring[j][0], yj=ring[j][1];
-        const intersect=((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi);
-        if(intersect) inside=!inside;
+      if(ndviOn) {
+        GIBS_NDVI.addTo(map);
+        $("toggleNDVI").style.borderColor = "rgba(26,255,140,.55)";
+        $("toggleNDVI").style.boxShadow = "0 0 18px rgba(26,255,140,.12)";
+      } else {
+        map.removeLayer(GIBS_NDVI);
+        $("toggleNDVI").style.borderColor = "rgba(26,255,140,.25)";
+        $("toggleNDVI").style.boxShadow = "none";
       }
-      return inside;
+    });
+
+    $("density").addEventListener("input", ()=>{
+      // só redesenha pixels, não precisa refazer eventos
+      desenharPixels();
+    });
+
+    // ===============================
+    // COLOR / SCORE
+    // ===============================
+    function classificarPorDistKm(distKm){
+      if(distKm <= TH_RED_KM) return "vermelho";
+      if(distKm <= TH_YELLOW_KM) return "amarelo";
+      return "verde";
     }
-    function pointInPolygon(lon, lat, geom){
-      const pt=[lon, lat];
-      if(geom.type==="Polygon"){
-        const rings=geom.coordinates;
-        if(!pointInRing(pt, rings[0])) return false;
-        for(let k=1;k<rings.length;k++) if(pointInRing(pt, rings[k])) return false;
-        return true;
+
+    function corDaClasse(cls){
+      if(cls === "vermelho") return getComputedStyle(document.documentElement).getPropertyValue("--red").trim();
+      if(cls === "amarelo") return getComputedStyle(document.documentElement).getPropertyValue("--yellow").trim();
+      return getComputedStyle(document.documentElement).getPropertyValue("--green").trim();
+    }
+
+    function scoreDaClasse(cls){
+      // MVP simples (depois vira índice real)
+      if(cls === "vermelho") return 20;
+      if(cls === "amarelo") return 55;
+      return 85;
+    }
+
+    // Haversine (km)
+    function distKm(aLat,aLon,bLat,bLon){
+      const R=6371;
+      const dLat=(bLat-aLat)*Math.PI/180;
+      const dLon=(bLon-aLon)*Math.PI/180;
+      const lat1=aLat*Math.PI/180;
+      const lat2=bLat*Math.PI/180;
+      const x=Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+      return 2*R*Math.asin(Math.sqrt(x));
+    }
+
+    function distMinimaParaEventos(lat, lon){
+      if(!eonetEvents.length) return Infinity;
+      let min = Infinity;
+      for(const ev of eonetEvents){
+        const d = distKm(lat, lon, ev.lat, ev.lon);
+        if(d < min) min = d;
       }
-      if(geom.type==="MultiPolygon"){
-        for(const poly of geom.coordinates){
-          const rings=poly;
-          if(pointInRing(pt, rings[0])){
-            let inHole=false;
-            for(let k=1;k<rings.length;k++) if(pointInRing(pt, rings[k])){ inHole=true; break; }
-            if(!inHole) return true;
-          }
+      return min;
+    }
+
+    // ===============================
+    // LOAD DATA
+    // ===============================
+    async function carregarGeojson(){
+      const res = await fetch(GEOJSON_URL, { cache:"no-store" });
+      if(!res.ok) throw new Error("Nao achei " + GEOJSON_URL + " (erro " + res.status + ")");
+      const gj = await res.json();
+      // garante FeatureCollection/Feature
+      amazoniaFeature = (gj.type === "Feature") ? gj : gj.features?.[0];
+      if(!amazoniaFeature) throw new Error("GeoJSON invalido (sem feature).");
+
+      // zoom no bioma
+      const bbox = turf.bbox(amazoniaFeature);
+      const bounds = L.latLngBounds([bbox[1], bbox[0]], [bbox[3], bbox[2]]);
+      map.fitBounds(bounds.pad(0.12));
+
+      // desenha contorno (fino, estilo HUD)
+      L.geoJSON(amazoniaFeature, {
+        style: {
+          color: "rgba(26,255,140,.55)",
+          weight: 2,
+          fillColor: "rgba(26,255,140,.05)",
+          fillOpacity: 0.08
         }
-        return false;
-      }
-      return false;
+      }).addTo(map);
     }
 
-    function getBBoxFromGeoJSON(geo){
-      let minLon=999, minLat=999, maxLon=-999, maxLat=-999;
-      const scan=(coords)=>{
-        for(const c of coords){
-          if(typeof c[0]==="number"){
-            const lon=c[0], lat=c[1];
-            minLon=Math.min(minLon, lon); minLat=Math.min(minLat, lat);
-            maxLon=Math.max(maxLon, lon); maxLat=Math.max(maxLat, lat);
-          }else scan(c);
-        }
-      };
-      for(const f of geo.features) scan(f.geometry.coordinates);
-      return { minLon, minLat, maxLon, maxLat };
-    }
-
-    async function fetchFirstOk(urls){
-      let lastErr = null;
-      for(const u of urls){
-        try{
-          const res = await fetch(u, { cache:"no-store" });
-          if(res.ok) return await res.json();
-          lastErr = new Error("Erro " + res.status + " em " + u);
-        }catch(e){
-          lastErr = e;
-        }
-      }
-      throw lastErr || new Error("Falha ao buscar GeoJSON.");
-    }
-
-    let biomeGeo=null, biomeGeom=null, bbox=null, events=[];
-
-    async function carregarBiome(){
-      const urls = [GEOJSON_PRIMARY, ...GEOJSON_FALLBACKS];
-      biomeGeo = await fetchFirstOk(urls);
-
-      layerBiome.clearLayers();
-      layerBiome.addData(biomeGeo);
-
-      const f0 = biomeGeo.features[0];
-      biomeGeom = f0.geometry;
-
-      bbox = getBBoxFromGeoJSON(biomeGeo);
-      map.fitBounds(layerBiome.getBounds(), { padding:[20,20] });
-    }
-
-    async function carregarEONET(){
+    async function carregarEonet(){
       const res = await fetch(EONET_WILDFIRES, { cache:"no-store" });
-      if(!res.ok) throw new Error("Falha ao buscar EONET (erro "+res.status+")");
+      if(!res.ok) throw new Error("EONET falhou (erro " + res.status + ")");
       const data = await res.json();
-      const out=[];
-      for(const ev of (data.events||[])){
-        const t = ev.geometry?.[0]?.date || "";
-        const g = ev.geometry?.[ev.geometry.length-1];
-        if(!g || g.type!=="Point") continue;
-        const lon=g.coordinates[0], lat=g.coordinates[1];
 
-        if(bbox){
-          if(lon<bbox.minLon || lon>bbox.maxLon || lat<bbox.minLat || lat>bbox.maxLat) continue;
-        }
-        if(biomeGeom && !pointInPolygon(lon, lat, biomeGeom)) continue;
-
-        out.push({ lat, lon, timeISO:t });
+      const events = [];
+      for(const ev of (data.events || [])){
+        const title = ev.title || "Evento";
+        // pega última geometria (ponto)
+        const geo = (ev.geometry && ev.geometry.length) ? ev.geometry[ev.geometry.length-1] : null;
+        if(!geo || geo.type !== "Point") continue;
+        const [lon, lat] = geo.coordinates;
+        const date = geo.date || ev.updated || "";
+        events.push({ lat, lon, title, dateISO: date });
       }
-      events=out;
 
-      layerDisturb.clearLayers();
+      // filtra por "dentro/entorno" do bioma (bbox + point-in-polygon)
+      // (primeiro bbox rápido, depois PIP)
+      const bbox = turf.bbox(amazoniaFeature);
+      const poly = amazoniaFeature;
+
+      const filtered = [];
       for(const e of events){
-        const c="rgba(255,77,77,.8)";
-        L.circleMarker([e.lat,e.lon], { renderer:canvasRenderer, radius:5, color:c, weight:0, fillColor:c, fillOpacity:0.55 }).addTo(layerDisturb);
-        L.circleMarker([e.lat,e.lon], { renderer:canvasRenderer, radius:14, color:c, weight:0, fillColor:c, fillOpacity:0.10 }).addTo(layerDisturb);
+        if(e.lon < bbox[0] || e.lon > bbox[2] || e.lat < bbox[1] || e.lat > bbox[3]) continue;
+        const pt = turf.point([e.lon, e.lat]);
+        if(turf.booleanPointInPolygon(pt, poly)) filtered.push(e);
+      }
+
+      eonetEvents = filtered;
+      $("countEvents").textContent = String(eonetEvents.length);
+
+      // markers “distúrbio real” (vermelho com halo)
+      eventLayer.clearLayers();
+      for(const ev of eonetEvents){
+        const c = getComputedStyle(document.documentElement).getPropertyValue("--red").trim();
+        const m = L.circleMarker([ev.lat, ev.lon], {
+          radius: 5,
+          color: c,
+          weight: 2,
+          fillColor: c,
+          fillOpacity: 0.75
+        });
+
+        const halo = L.circleMarker([ev.lat, ev.lon], {
+          radius: 16,
+          color: c,
+          weight: 0,
+          fillColor: c,
+          fillOpacity: 0.16
+        });
+
+        const html = `
+          <div style="font-weight:900; margin-bottom:6px;">🔥 Disturbio real</div>
+          <div><b>${ev.title}</b></div>
+          <div class="muted" style="margin-top:6px;">Fonte: NASA EONET</div>
+          <div class="muted">Data: ${String(ev.dateISO).slice(0,19).replace("T"," ")}</div>
+          <div class="muted">Lat: ${ev.lat.toFixed(3)} | Lon: ${ev.lon.toFixed(3)}</div>
+        `;
+        m.bindPopup(html);
+
+        halo.addTo(eventLayer);
+        m.addTo(eventLayer);
       }
     }
 
-    function stepDegFromSlider(){
-      const v=parseInt(document.getElementById("density").value,10);
-      document.getElementById("densityVal").textContent=v;
-
-      const mapZoom = map.getZoom();
-      const base = 0.55 - (v-4)*0.05;   // 0.55..0.25
-      const zoomFactor = Math.max(0.75, 4 / Math.max(3, mapZoom));
-      return Math.max(0.18, base * zoomFactor);
+    // ===============================
+    // PIXEL / HOLO LAYER (sem “mancha”)
+    // ===============================
+    function limparPixels(){
+      pixelLayer.clearLayers();
+      $("countPixels").textContent = "0";
+      $("liveCount").textContent = "0";
     }
 
     function desenharPixels(){
-      if(!biomeGeom || !bbox) return;
-      layerPixels.clearLayers();
+      if(!amazoniaFeature) return;
+      limparPixels();
 
-      const step = stepDegFromSlider();
-      let pts=[];
+      const poly = amazoniaFeature;
+      const bbox = turf.bbox(poly);
 
-      for(let lat=bbox.minLat; lat<=bbox.maxLat; lat+=step){
-        for(let lon=bbox.minLon; lon<=bbox.maxLon; lon+=step){
-          if(pointInPolygon(lon, lat, biomeGeom)) pts.push({lat, lon});
+      // "densidade" = passo em km aproximado por grau (simplificado)
+      // Slider 6..24 -> vira um passo em graus
+      const density = Number($("density").value); // 6..24
+      // passo em graus: menor = mais pontos; maior = menos pontos
+      const stepDeg = density / 100; // 0.06..0.24
+
+      let count = 0;
+
+      // Para não virar "mancha sólida":
+      // - bolinha menor
+      // - fillOpacity baixo
+      // - halo muito sutil
+      // - espaçamento real (stepDeg)
+      for(let lon = bbox[0]; lon <= bbox[2]; lon += stepDeg){
+        for(let lat = bbox[1]; lat <= bbox[3]; lat += stepDeg){
+          const pt = turf.point([lon, lat]);
+          if(!turf.booleanPointInPolygon(pt, poly)) continue;
+
+          const d = distMinimaParaEventos(lat, lon); // km
+          const cls = classificarPorDistKm(d);
+          const c = corDaClasse(cls);
+
+          // “holográfico” (ponto + halo)
+          const dot = L.circleMarker([lat, lon], {
+            radius: 2.8,           // pequeno = aspecto “pixel”
+            color: c,
+            weight: 0,
+            fillColor: c,
+            fillOpacity: 0.65
+          });
+
+          const halo = L.circleMarker([lat, lon], {
+            radius: 8.5,
+            color: c,
+            weight: 0,
+            fillColor: c,
+            fillOpacity: 0.10
+          });
+
+          const score = scoreDaClasse(cls);
+          const txtClasse = (cls==="vermelho") ? "disturbio" : (cls==="amarelo" ? "alerta" : "sem disturbio");
+
+          dot.on("click", ()=>{
+            $("lastPick").innerHTML =
+              `<b>Classificacao:</b> <span style="color:${c}; font-weight:900;">${txtClasse}</span><br>` +
+              `<b>Distancia ao disturbio mais proximo:</b> ${isFinite(d) ? d.toFixed(1)+" km" : "—"}<br>` +
+              `<b>Indice (MVP):</b> ${score} / 100<br>` +
+              `<span class="muted">Lat: ${lat.toFixed(3)} | Lon: ${lon.toFixed(3)}</span>`;
+          });
+
+          halo.addTo(pixelLayer);
+          dot.addTo(pixelLayer);
+
+          count++;
         }
       }
 
-      const MAX=5200;
-      if(pts.length>MAX){
-        const stride=Math.ceil(pts.length/MAX);
-        pts=pts.filter((_,i)=> i%stride===0);
-      }
-
-      let red=0,yel=0,grn=0;
-
-      for(const p of pts){
-        let minD=Infinity;
-        for(const e of events){
-          const d=haversineKm(p.lat,p.lon,e.lat,e.lon);
-          if(d<minD) minD=d;
-        }
-        if(events.length===0) minD=Infinity;
-
-        const cls=corPorDistKm(minD);
-        if(cls.label==="distúrbio") red++;
-        else if(cls.label==="alerta") yel++;
-        else grn++;
-
-        const marker=L.circleMarker([p.lat,p.lon], {
-          renderer:canvasRenderer,
-          radius:3.6,
-          color:cls.c, weight:0,
-          fillColor:cls.c, fillOpacity:0.85
-        });
-
-        marker.on("click", ()=>{
-          const distTxt=(minD===Infinity) ? "—" : (minD.toFixed(1)+" km");
-          document.getElementById("selectedInfo").innerHTML=`
-            <div><b>Classificação:</b> ${cls.label}</div>
-            <div><b>Distância do distúrbio mais próximo:</b> ${distTxt}</div>
-            <div class="muted">Lat: ${p.lat.toFixed(3)} | Lon: ${p.lon.toFixed(3)}</div>
-          `;
-        });
-
-        marker.addTo(layerPixels);
-
-        L.circleMarker([p.lat,p.lon], {
-          renderer:canvasRenderer,
-          radius:10,
-          color:cls.c, weight:0,
-          fillColor:cls.c, fillOpacity:0.10
-        }).addTo(layerPixels);
-      }
-
-      const total=red+yel+grn;
-      document.getElementById("countPixels").textContent=total.toLocaleString("pt-BR");
-      document.getElementById("rightCount").textContent=total.toLocaleString("pt-BR");
-      document.getElementById("countEvents").textContent=events.length.toLocaleString("pt-BR");
-
-      let idx=100;
-      if(total>0){
-        const redPct=red/total, yelPct=yel/total;
-        idx=Math.round(100 - (redPct*80 + yelPct*35)*100);
-        idx=Math.max(0, Math.min(100, idx));
-      }
-      document.getElementById("bioIndex").textContent=idx;
-      document.getElementById("bioIndex2").textContent=idx;
+      $("countPixels").textContent = String(count);
+      $("liveCount").textContent = String(count);
     }
 
+    // ===============================
+    // MAIN UPDATE
+    // ===============================
     async function atualizarTudo(){
       try{
-        document.getElementById("statusOnline").textContent="online";
-        document.getElementById("lastUpdate").textContent=nowBR();
+        $("statusOnline").textContent = "atualizando";
+        $("tagConn").textContent = "online";
+        $("statusOnline").style.color = "rgba(228,233,242,.85)";
 
-        if(!biomeGeo) await carregarBiome();
-        await carregarEONET();
+        $("tsUpdate").textContent = new Date().toLocaleString("pt-BR");
+
+        // carrega geojson uma vez
+        if(!amazoniaFeature) await carregarGeojson();
+
+        // carrega distúrbios reais
+        await carregarEonet();
+
+        // desenha camada holográfica
         desenharPixels();
+
+        $("statusOnline").textContent = "online";
       }catch(err){
-        document.getElementById("statusOnline").textContent="erro";
-        alert("Erro ao atualizar: " + err.message);
         console.error(err);
+        $("statusOnline").textContent = "erro";
+        $("tagConn").textContent = "erro";
+        alert("Erro ao atualizar: " + err.message);
       }
     }
 
-    map.on("zoomend", ()=> desenharPixels());
-    document.getElementById("density").addEventListener("input", ()=> desenharPixels());
-
+    // ===== MODAIS =====
     const content = {
       oquee: {
         title: "🌿 O que é o Observatório Bioecológico da Amazônia",
@@ -690,9 +742,9 @@
         body: `
           <ul class="bullet">
             <li><b>Satélite real</b> (NASA GIBS / VIIRS) como base do mapa.</li>
-            <li><b>Vegetação</b> (NDVI) como camada biótica <span class="muted">(toggle 🌱)</span>.</li>
+            <li><b>Vegetação</b> (NDVI) como camada biótica <span class="muted">(já disponível no toggle 🌱)</span>.</li>
             <li><b>Distúrbios</b> (incêndios) via <b>NASA EONET</b> <span class="muted">(eventos reais)</span>.</li>
-            <li><b>Pixels</b> dentro do bioma (geojson): cada ponto é uma leitura visual.</li>
+            <li><b>Pixels</b> dentro do bioma (GeoJSON): cada ponto é uma leitura visual.</li>
           </ul>
           <p class="muted">
             Regra do Observatório: <b>distúrbio</b> = 🔴 • <b>alerta</b> = 🟡 • <b>sem distúrbio</b> = 🟢.
@@ -709,28 +761,29 @@
             <li><b>Atualização contínua</b></li>
           </ul>
           <p class="muted">
-            Mapa satélite real + NDVI + distúrbios reais (EONET) + pixels holográficos dentro do bioma. Clique em um pixel.
+            Mapa satélite real + NDVI + distúrbios reais (EONET) + pixels holográficos dentro do bioma. Clique em um ponto.
           </p>
         `
       }
     };
 
     function openModal(key){
-      const overlay=document.getElementById("modalOverlay");
-      const titleEl=document.getElementById("modalTitle");
-      const bodyEl=document.getElementById("modalBody");
-      const item=content[key];
+      const overlay = document.getElementById("modalOverlay");
+      const titleEl = document.getElementById("modalTitle");
+      const bodyEl = document.getElementById("modalBody");
+      const item = content[key];
       if(!item) return;
-      titleEl.innerHTML=item.title;
-      bodyEl.innerHTML=item.body;
-      overlay.style.display="flex";
+      titleEl.innerHTML = item.title;
+      bodyEl.innerHTML = item.body;
+      overlay.style.display = "flex";
     }
-    function closeModal(){ document.getElementById("modalOverlay").style.display="none"; }
-    function overlayClick(e){ if(e.target.id==="modalOverlay") closeModal(); }
-    document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeModal(); });
+    function closeModal(){ document.getElementById("modalOverlay").style.display = "none"; }
+    function overlayClick(e){ if(e.target.id === "modalOverlay") closeModal(); }
+    document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
 
+    // start
     atualizarTudo();
-    setInterval(atualizarTudo, 10*60*1000);
+    setInterval(atualizarTudo, 10 * 60 * 1000);
   </script>
 </body>
 </html>
